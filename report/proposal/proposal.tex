@@ -1,0 +1,199 @@
+%--------------------------------------------------------------------------
+% COMP61011, project proposal
+% Edward John
+% University of Manchester
+%--------------------------------------------------------------------------
+
+\documentclass{article}
+\usepackage[toc,page]{appendix}
+\usepackage[margin=1.0in]{geometry}
+\usepackage{multicol}
+
+\usepackage[backend=bibtex]{biblatex}
+\addbibresource{../comp61011.bib}
+
+\title{Predicting labels for GitHub issues \\ Project Proposal}
+\author{Edward John}
+
+%--------------------------------------------------------------------------
+% Start of document
+%--------------------------------------------------------------------------
+\begin{document}
+
+% Commands
+\newcommand{\mycite}[1]{\textsuperscript{\cite{#1}}}
+
+% \maketitle
+\begin{huge}
+\noindent
+\makeatletter
+\@title \par
+\makeatother
+\end{huge}
+\vspace{1em}
+\begin{large}
+\noindent
+\makeatletter
+\@author, \@date
+\makeatother
+\end{large}
+
+\begin{multicols}{2}
+\section*{Problem}
+GitHub is a website of the US company GitHub, Inc. that offers online hosting of code repositories and support for project team collaboration. One of the provided features for each hosted "Git" repository is an issue tracker. The issue tracker allows users to submit issues. Types of issues can include; bug reports, feature suggestions, improvements or questions. When an issue is submitted, collaborators of the repository can add labels to it to help categorise the issue. Labels are not mutually exclusive, therefore an issue could have the labels; \textbf{bug} and \textbf{high priority}.
+
+Because labels have to be manually assigned by collaborators, issues may not be labelled for some time depending on the availability and number of collaborators. As a result filtering and sorting may not select or collate all the related issues of a particular type, and collaborators have to be relied upon to be diligent in keeping up to date with their labelling new issues.
+
+\section*{Objective}
+The objective of the project is to investigate and compare different features and develop a model for predicting the labels that might be assigned to issues, using machine learning techniques.
+
+\section*{Approach}
+The following steps will be performed:
+\begin{enumerate}
+\item Develop an application to export data from GitHub using one of the provided APIs.
+\item Identify features in the data that may be useful in predicting the labels for issues.
+\item Apply various machine learning techniques to refine the feature selection and identify the best model.
+\item Train and test the resultant model against the exported data.
+\end{enumerate}
+
+No existing research on prediction of labels for software issues has been discovered, however there are many sources of information on a similar problem, spam filtering. Spam filtering takes similar features into account such as the occurrence of particular words or phrases in emails.
+
+The following sources are of interest:
+\begin{itemize}
+\item Machine Learning Techniques in Spam Filtering \mycite{mltechniques_spamfiltering}
+\item Machine Learning Methods For Spam E-mail Classification \mycite{mlmethods_spamfiltering}
+\end{itemize}
+
+Feature selection will be an important factor in achieving a low error rate. The aim is to focus on two or three machine learning classification algorithms and compare different selections of features for each model. These classification algorithms may include support vector machine, k-NN, decision tree and naive Bayes.
+
+\section*{Progress}
+As of the time of writing, a stand alone C\# application has been written which downloads selected data from GitHub using the octokit.net API\mycite{octokit}. The application is able to produce a word / phrase frequency table for issues with a particular label. This was used to compare frequently occurring words and phrases across different repositories and relate them to the assigned labels. This will be one factor in selecting features for producing the training data. The word / phrase frequency output with stop words removed can be found in appendix~\ref{app:wordfreq}.
+
+\printbibliography
+
+\end{multicols}
+
+\newpage
+
+\begin{appendices}
+
+\section{Sample data}
+\begin{table}[h]
+\centering
+\begin{tabular}{c|c|c|c|c|c|c||c|c|c|c|c|c}
+\hline
+ & \multicolumn{9}{|c|}{Features} & \multicolumn{3}{|c}{Labels} \\
+\hline
+issue & 0 & 1 & a new & also & always & and the  &  works & would & wrong & bug & suggestion & question \\
+\hline
+\hline
+521 & 0 & 0 & 0 & 0 & 0 & 0  &  0 & 1 & 0 & 0 & 1 & 0 \\
+520 & 0 & 0 & 1 & 0 & 0 & 0  &  0 & 0 & 0 & 0 & 1 & 0 \\
+515 & 0 & 0 & 0 & 0 & 0 & 0  &  0 & 0 & 0 & 0 & 0 & 0 \\
+512 & 0 & 1 & 0 & 0 & 0 & 1  &  0 & 1 & 0 & 1 & 0 & 0 \\
+504 & 0 & 0 & 0 & 0 & 0 & 0  &  0 & 0 & 0 & 0 & 1 & 0 \\
+499 & 0 & 0 & 0 & 0 & 0 & 0  &  0 & 0 & 0 & 0 & 1 & 0 \\
+496 & 0 & 0 & 0 & 0 & 0 & 0  &  0 & 0 & 0 & 0 & 0 & 0 \\
+493 & 0 & 0 & 0 & 0 & 0 & 0  &  0 & 0 & 0 & 1 & 0 & 0 \\
+491 & 0 & 0 & 0 & 0 & 1 & 0  &  0 & 0 & 0 & 1 & 0 & 0 \\
+490 & 0 & 0 & 0 & 0 & 0 & 0  &  0 & 0 & 0 & 1 & 0 & 0 \\
+485 & 0 & 0 & 0 & 0 & 0 & 0  &  0 & 0 & 0 & 0 & 1 & 0 \\
+\hline
+\end{tabular}
+\caption{A sample of data for \texttt{IntelOrca/OpenRCT2} exported from the program}
+\label{tab:sample_data}
+\end{table}
+
+\section{Word / phrase frequency data}
+\label{app:wordfreq}
+\begin{table}[h]
+\centering
+\begin{tabular}{llllllll}
+0         &
+1         &
+also      &
+bug       &
+can       &
+change    &
+code      &
+doesn't   \\
+don't     &
+error     &
+example   &
+first     &
+get       &
+i'm       &
+instead   &
+just      \\
+like      &
+line      &
+name      &
+new       &
+now       &
+one       &
+open      &
+option    \\
+read      &
+reproduce &
+right     &
+show      &
+since     &
+something &
+still     &
+time      \\
+try       &
+used      &
+using     &
+version   &
+way       &
+will      &
+work      &
+works     
+\end{tabular}
+\newline\vspace{2mm}\newline
+\begin{tabular}{llllll}
+a new     &
+and the   &
+does not  &
+if the    &
+if you    &
+in the    \\
+is a      &
+of the    &
+on the    &
+that the  &
+the first &
+the new   \\
+the same  &
+this is   &
+to be     &
+to the    &
+with the  
+\end{tabular}
+\caption{Frequent words / phrases found in bug labelled issues}
+\label{tab:wordfreq_bug}
+\end{table}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llllll}
+can       &
+currently &
+just      &
+like      &
+make      &
+since     
+\end{tabular}
+\\
+\begin{tabular}{llll}
+in the  &
+of the  &
+to make &
+to the  
+\end{tabular}
+\caption{Frequent words / phrases found in suggestion labelled issues}
+\label{tab:wordfreq_suggestion}
+\end{table}
+
+\end{appendices}
+\end{document}
