@@ -32,7 +32,7 @@ namespace IntelOrca.GithubML.Processing
 			foreach (string csvFile in csvFiles)
 				examples.AddRange(GetExamples(csvFile));
 
-			int k = 13;
+			int k = 1;
 			int folds = 5;
 			int numRepeats = 5;
 			double errorRate = 0;
@@ -79,8 +79,8 @@ namespace IntelOrca.GithubML.Processing
 					if (labelPredictions[i] != example.Labels[i])
 						incorrectPredictions++;
 
-				// errorRate += (incorrectPredictions / 3.0);
-				errorRate += labelPredictions[0] == example.Labels[0] ? 0 : 1;
+				errorRate += (incorrectPredictions / 3.0);
+				// errorRate += labelPredictions[2] == example.Labels[2] ? 0 : 1;
 			}
 			errorRate /= examples.Length;
 
