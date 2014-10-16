@@ -16,6 +16,7 @@
 \usepackage{algorithm}
 \usepackage{algorithmic}
 \usepackage{hyperref}
+\usepackage{color}
 \newcommand{\theHalgorithm}{\arabic{algorithm}}
 
 %--------------------------------------------------------------------------
@@ -50,18 +51,15 @@
 ]
 
 %--------------------------------------------------------------------------
-% Abstract
+% Content
 %--------------------------------------------------------------------------
-\begin{abstract} 
-This is my abstract.
-\end{abstract} 
+\input{content}
+\clearpage
 
 %--------------------------------------------------------------------------
-% Background
+% Bibliography
 %--------------------------------------------------------------------------
-\section{Background}
-\label{submission}
-Some background text...
-
+\bibliography{../comp61011}
+\bibliographystyle{icml2012}
 
 \end{document}

@@ -1,0 +1,92 @@
+%--------------------------------------------------------------------------
+% COMP61011, project
+% Edward John
+% University of Manchester
+%--------------------------------------------------------------------------
+\definecolor{light-gray}{gray}{0.9}
+\newcommand{\todo}[1]{
+	\colorbox{light-gray}{
+		\parbox{\linewidth}{
+			\textbf{TODO} #1
+		}
+	}
+}
+
+%--------------------------------------------------------------------------
+% Abstract
+%--------------------------------------------------------------------------
+\begin{abstract} 
+Issue tracking in software development usually requires the submission of text explaining the issue. Issues tend to have labels
+associated with them to help categorise them so that they can be more easily searched for. Examples of labels could include
+\textit{bug}, \textit{suggestion} or \textit{question} and may not be mutually exclusive. GitHub is a website that provides
+issue tracking to public code repositories. This allows any GitHub user to submit issues wwhere repository collaborators can
+then label them.
+
+This projects explores how common labels in particular (\textit{bug}, \textit{suggestion} and \textit{question}) can be
+predicted for GitHub issues using machine learning classifiers such as the k-NN classifier and then using feature selection to
+improve the accuracy. By using words and phrases in the issue body text as features, the performance can be measured and
+compared to determine which words and phrases are more important than others as to what label the issue should be classified as.
+\end{abstract}
+
+%--------------------------------------------------------------------------
+% Introduction
+%--------------------------------------------------------------------------
+\section{Introduction}
+GitHub is a website of the US company GitHub, Inc. that offers online hosting of code repositories and support for project team
+collaboration. One of the provided features for each hosted "Git" repository is an issue tracker. The issue tracker allows users
+to submit issues. Types of issues can include; bug reports, feature suggestions, improvements or questions. When an issue is
+submitted, collaborators of the repository can add labels to it to help categorise the issue. Labels may not mutually exclusive,
+therefore an issue could have the labels; bug and high priority. Because labels have to be manually assigned by collaborators,
+issues may not be labelled for some time depending on the availability and number of collaborators. As a result filtering and
+sorting may not select or collate all the related issues of a particular type, and collaborators have to be relied upon to be
+diligent in keeping up to date with their labelling new issues.
+
+Similar to spam e-mail classifiers, an issue can be classified by analysing the words and phrases in the issue body text. Doing
+this requires selecting the right word and phrases (features) to look for. This helps remove noise such as stop words which are
+found in nearly all bodies of text for anything and improves the performance of the algorithm by reducing the search space.
+Feature selection can also be used to improve the classifiers individually for the labels \textit{bug}, \textit{suggestion} and
+\textit{question} by giving each feature a different weight counting towards each label classification.
+
+%--------------------------------------------------------------------------
+% Background
+%--------------------------------------------------------------------------
+\section{Background}
+\subsection{Obtaining the data}
+\todo{How I obtained the data using GitHub API.}
+
+\subsection{Word / phrase frequencies}
+\todo{}
+
+%--------------------------------------------------------------------------
+% Experiments
+%--------------------------------------------------------------------------
+\section{Experiments}
+\subsection{k-NN classifier}
+\todo{}
+
+\begin{equation}
+\mathrm{hamming}(x,x') = \sum^d_{j=1} \delta (x_{j} \neq x'_{j})
+\end{equation}
+
+\subsection{Measuring the performance}
+\todo{
+	\begin{itemize}
+		\item Cross validation
+		\item Receiver operating characteristics (ROC).
+	\end{itemize}
+}
+
+\subsection{Feature selection}
+\todo{}
+
+%--------------------------------------------------------------------------
+% Analysis
+%--------------------------------------------------------------------------
+\section{Analysis}
+Analysis text...
+
+%--------------------------------------------------------------------------
+% Conclusions
+%--------------------------------------------------------------------------
+\section{Conclusions}
+Conclusions text...
