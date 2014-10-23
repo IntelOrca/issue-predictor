@@ -12,6 +12,8 @@
 	}
 }
 
+\nocite{github}
+
 %--------------------------------------------------------------------------
 % Abstract
 %--------------------------------------------------------------------------
@@ -19,13 +21,13 @@
 Issue tracking in software development usually requires the submission of text explaining the issue. Issues tend to have labels
 associated with them to help categorise them so that they can be more easily searched for. Examples of labels could include
 \textit{bug}, \textit{suggestion} or \textit{question} and may not be mutually exclusive. GitHub is a website that provides
-issue tracking to public code repositories. This allows any GitHub user to submit issues wwhere repository collaborators can
-then label them.
+issue tracking to public code repositories. This allows any GitHub user to submit issues where repository collaborators can then
+label them.
 
 This projects explores how common labels in particular (\textit{bug}, \textit{suggestion} and \textit{question}) can be
-predicted for GitHub issues using machine learning classifiers such as the k-NN classifier and then using feature selection to
-improve the accuracy. By using words and phrases in the issue body text as features, the performance can be measured and
-compared to determine which words and phrases are more important than others as to what label the issue should be classified as.
+predicted for GitHub issues by first extracting features from the issue text in the form of words and phrases. This can then be
+processed using machine learning techniques such as the k-Nearest Neighbour classifier and finally measuring and comparing the
+performance over several different feature selection techniques to improve the accuracy of the classifier.
 \end{abstract}
 
 %--------------------------------------------------------------------------
@@ -51,42 +53,187 @@ Feature selection can also be used to improve the classifiers individually for t
 % Background
 %--------------------------------------------------------------------------
 \section{Background}
-\subsection{Obtaining the data}
-\todo{How I obtained the data using GitHub API.}
+\subsection{Information extraction}
+Before any experiments could be made on predicting labels for issues, information extraction was performed by writing an
+application that downloaded all the issues for a given GitHub repository and extracted features and labels from each issue. The
+application used the Octokit \cite{octokit} library provided by GitHub to download the issues using their application
+programming interface (API). These features consisted of words and pairs of words (phrases) from within the body text of an
+issue. The labels were individual non-mutual exclusive flags for whether the issue had been labelled as \textit{bug},
+\textit{suggestion} or \textit{question}.
 
 \subsection{Word / phrase frequencies}
-\todo{}
+As a preliminary form of feature selection, a word and phrase frequency analysis was performed on all the issues for three
+different GitHub repositories (jquery-handsontable, TypeScript and OpenRCT2). The number of instances of all single words, pairs
+of words and triples of words were counted for each label (\textit{bug}, \textit{suggestion} and \textit{question}), for each of
+the three repositories. All words or phrases that only occurred once were removed, the remaining words and phrases were then
+further filtered leaving just the words and phrases that existed with in all three repositories. This was to eliminate specific
+terminology only found for a particular repository, e.g. \textit{``JavaScript''} for the TypeScript repository and therefore
+leaving a more generalised set of words and phrases that could be used for any repository. Stop words were also removed as they
+would act as noise during the training stage, due to their abundance in most literature. A list of stop words provided by
+ranks.nl \cite{ranks.nl} was used. tf-idf is an equation that can be used to measure how important a word or phrase is based on
+its global frequency over all documents and its frequency for a particular document. This could of have been used to further
+reduce the list of words to include as features, however removing a set of known general stop words was considered to be enough
+to reduce the set as feature selection based on classifier performance will also take place.
+
+\subsection{Feature selection}
+Once initial tests with all the features have been run, the number of features can be narrowed down to reduce the size of the
+problem and also reduce the error rate by removing irrelevant or noisy features.
 
 %--------------------------------------------------------------------------
 % Experiments
 %--------------------------------------------------------------------------
 \section{Experiments}
-\subsection{k-NN classifier}
-\todo{}
+\subsection{k-Nearest Neighbour classifier}
+The k-Nearest Neighbour (k-NN) classifier requires no learning algorithm to produce a model. Instead it classifies by an example
+by testing against every example within the training data. k-NN classifiers can provide accurate results but are however very
+computationally expensive due the the $O(nd)$ running time where $n$ is the number of examples and $d$ is the number of
+features. It classifies an example by measuring the distance between the testing example and every training example using a
+distance function, for example Euclidean or Hamming. It then chooses the most common class in the nearest $k$ examples. There
+are many techniques that can be used to optimise the algorithm but are not relevant to the objective of this project.
 
+Due to the binary features of whether a word or phrase exists or not in the issue body text, a distance function such as
+Euclidean would not be appropriate. Instead the distance can be calculated using the Hamming formula as shown in
+Equation~\ref{eq:hamming}. This is the total number of features that are different between two examples. Therefore two identical
+examples will produce a distance of 0 and will increase, the more words and phrases that are only present in one example and not
+the other.
 \begin{equation}
-\mathrm{hamming}(x,x') = \sum^d_{j=1} \delta (x_{j} \neq x'_{j})
+	\label{eq:hamming}
+	\mathrm{hamming}(x,x') = \sum^d_{j=1} \delta (x_{j} \neq x'_{j})
 \end{equation}
+where $\delta$ is the indicator function which returns 0 if the word or phrase is present in both examples or neither examples
+and 1 if the word or phrase is only present in one example but not the other.
 
 \subsection{Measuring the performance}
-\todo{
-	\begin{itemize}
-		\item Cross validation
-		\item Receiver operating characteristics (ROC).
-	\end{itemize}
-}
+Before attempting to improve the classifier using feature selection, a method of measuring the performance reliably is required
+so that any improvement or degrade can is shown between manipulation of the classifier. The performance is measured based on the
+number of correct predictions made compared with the number of incorrect predictions made. Splitting up the examples obtained
+from the application that was written to extract issues from GitHub into two parts allows one part to be used for training and
+the other part to be used for testing. Since the correct labels are known, the predicted labels given to the testing examples
+can be compared with the correct labels. The number of incorrect predictions made over the number of total predictions is the
+error rate.
+
+The process can be performed multiple times where the data is shuffled before each case to reduce the uncertainty and obtain
+standard deviation values.
+
+\subsubsection{Cross validation}
+Cross validation involves splitting the examples into multiple folds so that each fold can be used for testing and the rest for
+training. The final error rates can be averaged to generalise the classifier's performance more as it takes into account
+multiple sets of training data and testing data in isolation.
+
+This can be further improved by a technique known as Leave One Out Cross Validation (LOOCV) which involves performing cross
+validation on all but one of the folds the data is split into. The folds that give the lowest error rate when used as training
+data is then used as the training data for the fold that was not used in the cross validation. The error rate produced by this
+final test is then used as the measure of performance.
+
+\subsubsection{Receiver operating characteristics}
+\todo{Receiver operating characteristics (ROC)}
+
+
+% Initial results
+Without any feature selection, an average error rate across all labels using cross validation was 26\%. The error rate for just
+the \textbf{bug} label was significantly higher at 36\%.
 
 \subsection{Feature selection}
+The k-NN classifier was modified to apply feature selection. This was achieved by allowing each feature to have an independent
+weight which affected the distance between two examples. Each feature selection technique assigns a weight to each feature where
+$w_f = 0$ is a feature that is ignored. This distance function is revised in equation~\ref{eq:hamming_weights}. This will
+produce higher distances for features that correlate more.
+\begin{equation}
+	\label{eq:hamming_weights}
+	\mathrm{hamming}(x,x') = \sum^d_{j=1} w_{j} \delta (x_{j} \neq x'_{j})
+\end{equation}
+where $w_{j}$ is the weight of the feature.
+
+\subsubsection{Mutual Information}
+Entropy shows us the measurement of information for a set of data or in other words, the ``amount of randomness''. Entropy can
+be used to measure the amount of information gain for a particular feature. By using equation~\ref{eq:entropy}, where $X$ is
+the set of feature values or label values, the amount information in the probability distribution of the set can be calculated.
+\begin{align}
+	\label{eq:entropy}
+	H(X) = -\sum_{x \in X} p(x) \log p(x)
+\end{align}
+
+Because this scenario only contains binary features (non-existent and existent words / phrases) and binary classes
+(e.g. bug or not bug), equation~\ref{binary_entropy} can be used instead which derives from equation~\ref{eq:entropy} but with
+the probability and compliment substituted for the summation.
+\begin{equation}
+	\label{eq:binary_entropy}
+	\begin{split}
+		H(X) &= -(p(x) \log p(x) + p(x^c)     \log(p(x^c))   \\
+		H(X) &= -(p(x) \log p(x) + (1 - p(x)) \log(1 - p(x))
+	\end{split}
+\end{equation}
+
+To determine whether a feature correlates to a particular class such as \textbf{bug}, the mutual information can be calculated
+using equation~\ref{eq:mutual_information}, where $H(Y)$ is the entropy of the class and $H(Y|X)$ is the entropy of the class
+given the feature. This will produce numbers within the range $0 \leq I(X;Y) \leq \min(H(X), H(Y))$. The higher the value, the
+more the feature correlates to the class, either when it exists or doesn't exist. Each feature can then have an independent
+weight based on the mutual information for a particular class or by its rank within the set of features.
+\begin{equation}
+	\label{eq:mutual_information}
+	I(X;Y) = H(Y) - H(Y|X)
+\end{equation}
+
+Figure~\ref{fig:mi_prob} shows the probability, $p(\mathrm{bug}|f)$ and mutual information, $I(f,\mathrm{bug})$ for each feature
+where the mutual information is above 0.13 bits. The features are ordered from lowest probability to highest probability showing
+the least common words / phrases found in issues labelled \textbf{bug} and the most common words / phrases found in issues
+labelled \textbf{bug}. The closer the probability is to 0.5, the lower the mutual information, therefore the words / phrases
+with very low probability and very high probability will have a high weight as they correlate the most to the label
+\textbf{bug}.
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\linewidth]{charts/mi_prob.pdf}
+	\label{fig:mi_prob}
+	\caption{Feature probability and mutual information distribution.}
+\end{figure}
+
+After calculating the mutual information for each feature and using it for the feature's weight that is applied in the k-NN
+distance function as shown in Equation~\ref{eq:hamming_weights}. The error rate for the label \textbf{bug} lowered to 33\%. The
+feature selection technique had surprisingly made little difference in improving the accuracy. The experiment was then slightly
+modified again so that any feature with a mutual information of less than 0.1 bits was ignored. This lowered the number of
+features from 93 to just 34. The error rate was 36\%, the same accuracy prior to feature selection. This meant that over half of
+the features were completely irrelevant for the label \textbf{bug}. However when ignoring all features with a mutual information
+of less than 0.5 bits, there were only 11 features remaining which produced an error rate of 41\%.
+
+\subsubsection{Conditional Mutual Information}
+\todo{}
+\cite{fast_binary_feature_selection}
+
+\subsubsection{The `Wrapper' method}
+\todo{}
+
+\subsubsection{Filter methods}
 \todo{}
 
 %--------------------------------------------------------------------------
 % Analysis
 %--------------------------------------------------------------------------
 \section{Analysis}
-Analysis text...
+\todo{}
+\cite{stability_feature_ranking}
+\cite{redundant_feature_elimination}
+
+\cite{mltechniques_spamfiltering}
+\cite{mlmethods_spamfiltering}
 
 %--------------------------------------------------------------------------
 % Conclusions
 %--------------------------------------------------------------------------
 \section{Conclusions}
-Conclusions text...
+\todo{}
+
+%--------------------------------------------------------------------------
+% Notes / ideas
+%--------------------------------------------------------------------------
+% - http://ats.cs.ut.ee/u/kt/hw/spam/spam.pdf page 67
+%   http://airccse.org/journal/jcsit/0211ijcsit12.pdf page 176
+%   l/k-rule (interesting?)
+% 
+% - http://computerresearch.org/stpr/index.php/gjcst/article/view/741/650
+%   http://www.cs.rit.edu/~nan2563/feature_selection.pdf
+%   http://www-nlp.stanford.edu/IR-book/
+%   for feature selection techniques
+% 
+% 
+% 
+% 

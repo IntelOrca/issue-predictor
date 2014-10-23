@@ -9,6 +9,9 @@ namespace IntelOrca.GithubML.Export
 			return TheStopWords.Contains(word.Trim().ToLower());
 		}
 
+		/// <remarks>
+		/// Source: http://www.ranks.nl/stopwords
+		/// </remarks>
 		private static HashSet<string> TheStopWords = new HashSet<string>() {
 			"a",
 			"about",
