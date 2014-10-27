@@ -39,6 +39,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="EnumerableExtensions.cs" />
+    <Compile Include="Example.cs" />
     <Compile Include="IClassifier.cs" />
     <Compile Include="KnnClassifier.cs" />
     <Compile Include="Program.cs" />

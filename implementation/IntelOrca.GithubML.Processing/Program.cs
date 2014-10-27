@@ -1,21 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
 namespace IntelOrca.GithubML.Processing
 {
-	internal class Example
-	{
-		public int[] Features { get; set; }
-		public bool[] Labels { get; set; }
-
-		public override string ToString()
-		{
-			return String.Join(",", Labels.Select(x => x ? 1 : 0));
-		}
-	}
-
 	internal class Program
 	{
 		private static Random _random = new Random();
@@ -30,11 +20,11 @@ namespace IntelOrca.GithubML.Processing
 				"*.csv"
 			);
 
-			_featureNames = GetFeatures(csvFiles[0]);
+			_featureNames = Example.GetFeaturesFromCsv(csvFiles[0]);
 
 			List<Example> examples = new List<Example>();
 			foreach (string csvFile in csvFiles)
-				examples.AddRange(GetExamples(csvFile));
+				examples.AddRange(Example.FromCsv(csvFile));
 
 			// var filteredExamples = examples.Where(x => x.Labels.Contains(true)).ToArray();
 			// examples.Clear();
@@ -45,12 +35,14 @@ namespace IntelOrca.GithubML.Processing
 				.ToArray();
 
 			Example[] filteredExamples = examples.ToArray();
+			
+			int label = 0;
 
-			int label = 2;
+			FeatureWeights = WrapperMethod(examples, label);
 
 			KnnClassifier knn = new KnnClassifier(23);
 			for (double min = 0; min < 1.0; min += 0.1) {
-				RankByMutalInformation(filteredExamples, label, min);
+				// RankByMutalInformation(filteredExamples, label, min);
 				Tuple<double, double> meanStd = TestNTimes(knn, examples, 5, 5, label);
 
 				Console.WriteLine("Error rate: mean {0:0.00}, std {1:0.00} for {2:0.00}", meanStd.Item1, meanStd.Item2, min);
@@ -60,6 +52,93 @@ namespace IntelOrca.GithubML.Processing
 			// return;			
 			Console.ReadLine();
 		}
+
+		private static int[] WrapperMethod(IEnumerable<Example> examples, int label)
+		{
+			int numFeatures = _featureNames.Length;
+			KnnClassifier knn = new KnnClassifier(23);
+
+			Queue<int> randomFeatureList = new Queue<int>(
+				Enumerable.Range(0, numFeatures).OrderBy(x => _random.Next())
+			);
+
+			int[] featuresToInclude = FeatureWeights = new int[numFeatures];
+			for (int i = 0; i < numFeatures; i++)
+				featuresToInclude[i] = 1;
+
+			double bestErrorRate = CrossValidate(knn, examples, 5, label);
+
+			Stopwatch sw = new Stopwatch();
+			sw.Start();
+			while (randomFeatureList.Count > 0) {
+				int featureIndex = randomFeatureList.Dequeue();
+				featuresToInclude[featureIndex] = 0;
+
+				double errorRate = CrossValidate(knn, examples, 5, label);
+				if (errorRate < bestErrorRate)
+					bestErrorRate = errorRate;
+				else if (errorRate > bestErrorRate + 4)
+					featuresToInclude[featureIndex] = 1;
+
+				double remainingFeatureCount = randomFeatureList.Count;
+				double featuresDoneSoFar = numFeatures - remainingFeatureCount;
+				double avgTimePerTest = sw.ElapsedMilliseconds / featuresDoneSoFar;
+				double eta = avgTimePerTest * remainingFeatureCount;
+
+				Console.Clear();
+				Console.WriteLine("{0:0.0}%, ETA: {1:0.0} minutes", featuresDoneSoFar / numFeatures * 100, eta / (1000 * 60));
+			}
+
+			for (int i = 0; i < numFeatures; i++)
+				Console.WriteLine(featuresToInclude[i]);
+			Console.ReadLine();
+
+			return featuresToInclude.ToArray();
+		}
+
+		#region Testing / validation
+
+		private static Tuple<double, double> TestNTimes(IClassifier classifier, IEnumerable<Example> examples, int n, int folds, int label)
+		{
+			double[] errorRates = Enumerable.Range(0, n)
+				.Select(x => CrossValidate(classifier, examples, folds, label))
+				.ToArray();
+
+			double mean = errorRates.Average();
+			double std = Math.Sqrt(errorRates.Select(x => Math.Pow(x - mean, 2)).Average());
+
+			return new Tuple<double, double>(mean, std);
+		}
+
+		private static double CrossValidate(IClassifier classifier, IEnumerable<Example> examples, int folds, int label)
+		{
+			double errorRate = 0;
+
+			Example[][] splitExamples = examples
+					.OrderBy(x => _random.Next())
+					.ToArray()
+					.SplitInto(folds).ToArray();
+
+			List<Example> trainingData = new List<Example>();
+			for (int i = 0; i < folds; i++) {
+				trainingData.Clear();
+				for (int j = 0; j < folds; j++)
+					if (i != j)
+						trainingData.AddRange(splitExamples[j]);
+
+				classifier.Train(trainingData);
+				classifier.Test(splitExamples[i]);
+
+				errorRate += label == -1 ?
+					classifier.AverageErrorRate :
+					classifier.ErrorRates[label];
+			}
+			return errorRate / folds;
+		}
+
+		#endregion
+
+		#region Feature selection
 
 		private static void RankByMutalInformation(Example[] examples, int label, double minimumMutualInformation)
 		{
@@ -148,18 +227,6 @@ namespace IntelOrca.GithubML.Processing
 			int numUsedFeatures = FeatureWeights.Count(x => x != 0);
 		}
 
-		private static double ConditionalMutualInformation(IReadOnlyCollection<Example> examples, int featureA, int featureB, int label)
-		{
-			// I(Xa|Xb;Y) = H(Y) - H(Y|(Xa|Xb))
-
-			// p(Y)
-			// p(Y|(Xa|Xb))
-			double pY = examples.Average(x => x.Labels[label] ? 1 : 0);
-			double pYGivenXaGivenXb = GetProbability(examples, featureA, featureB, 0);
-
-			return BinaryEntropy(pY, 2) - BinaryEntropy(pYGivenXaGivenXb, 2);
-		}
-
 		private static double GetProbability(IReadOnlyCollection<Example> examples, int feature, int label)
 		{
 			var examplesGivenX = examples
@@ -212,79 +279,24 @@ namespace IntelOrca.GithubML.Processing
 			return hY - hYgivenX;
 		}
 
+		private static double ConditionalMutualInformation(IReadOnlyCollection<Example> examples, int featureA, int featureB, int label)
+		{
+			// I(Xa|Xb;Y) = H(Y) - H(Y|(Xa|Xb))
+
+			// p(Y)
+			// p(Y|(Xa|Xb))
+			double pY = examples.Average(x => x.Labels[label] ? 1 : 0);
+			double pYGivenXaGivenXb = GetProbability(examples, featureA, featureB, 0);
+
+			return BinaryEntropy(pY, 2) - BinaryEntropy(pYGivenXaGivenXb, 2);
+		}
+
 		private static double BinaryEntropy(double p, double logBase)
 		{
 			double notP = 1 - p;
 			return -((p * Math.Log(p, logBase)) + (notP * Math.Log(notP, logBase)));
 		}
 
-		private static Tuple<double, double> TestNTimes(IClassifier classifier, IEnumerable<Example> examples, int n, int folds, int label)
-		{
-			double[] errorRates = Enumerable.Range(0, n)
-				.Select(x => CrossValidate(classifier, examples, folds, label))
-				.ToArray();
-
-			double mean = errorRates.Average();
-			double std = Math.Sqrt(errorRates.Select(x => Math.Pow(x - mean, 2)).Average());
-
-			return new Tuple<double, double>(mean, std);
-		}
-
-		private static double CrossValidate(IClassifier classifier, IEnumerable<Example> examples, int folds, int label)
-		{
-			double errorRate = 0;
-
-			Example[][] splitExamples = examples
-					.OrderBy(x => _random.Next())
-					.ToArray()
-					.SplitInto(folds).ToArray();
-
-			List<Example> trainingData = new List<Example>();
-			for (int i = 0; i < folds; i++) {
-				trainingData.Clear();
-				for (int j = 0; j < folds; j++)
-					if (i != j)
-						trainingData.AddRange(splitExamples[j]);
-
-				classifier.Train(trainingData);
-				classifier.Test(splitExamples[i]);
-
-				errorRate += label == -1 ?
-					classifier.AverageErrorRate :
-					classifier.ErrorRates[label];
-			}
-			return errorRate / folds;
-		}
-
-		private static string[] GetFeatures(string path)
-		{
-			List<string> features = new List<string>();
-
-			CsvSheet sheet = new CsvSheet(path);
-			for (int x = 4; x < sheet.Columns - 3; x++)
-				features.Add(sheet[x, 0]);
-
-			return features.ToArray();
-		}
-
-		private static IEnumerable<Example> GetExamples(string path)
-		{
-			CsvSheet sheet = new CsvSheet(path);
-			for (int i = 1; i < sheet.Rows; i++) {
-				Example example = new Example();
-
-				List<int> features = new List<int>();
-				List<bool> labels = new List<bool>();
-				for (int j = 4; j < sheet.Columns - 3; j++)
-					features.Add(Int32.Parse(sheet[j, i]));
-
-				for (int j = sheet.Columns - 3; j < sheet.Columns; j++)
-					labels.Add(Int32.Parse(sheet[j, i]) != 0);
-
-				example.Features = features.ToArray();
-				example.Labels = labels.ToArray();
-				yield return example;
-			}
-		}
+		#endregion
 	}
 }
