@@ -144,6 +144,9 @@ produce higher distances for features that correlate more.
 \end{equation}
 where $w_{j}$ is the weight of the feature.
 
+\subsubsection{The `Wrapper' method}
+\todo{}
+
 \subsubsection{Mutual Information}
 Entropy shows us the measurement of information for a set of data or in other words, the ``amount of randomness''. Entropy can
 be used to measure the amount of information gain for a particular feature. By using equation~\ref{eq:entropy}, where $X$ is
@@ -195,14 +198,84 @@ features from 93 to just 34. The error rate was 36\%, the same accuracy prior to
 the features were completely irrelevant for the label \textbf{bug}. However when ignoring all features with a mutual information
 of less than 0.5 bits, there were only 11 features remaining which produced an error rate of 41\%.
 
+The error rates for \textbf{suggestion} and \textbf{bug} were consistently 0.22 and 0.19 respectively using the same technique.
+It was suspected that a k-NN classifier where $k = 23$ was underfitting the data for \textbf{suggestion} and \textbf{bug} but
+not for \textbf{bug}. The same tests were performed again with $k = 3$, the results are shown in Table~\ref{tbl:mi_errors_k3}
+and Figure~\ref{fig:mi_errors_k3}.
+
+\begin{table}[h]
+	\centering
+	\begin{tabular}{|c||cc|cc|cc|}
+	\hline
+
+	% First row
+	& \multicolumn{6}{c|}{error rate} \\
+
+	% Second row
+	minimum &
+	\multicolumn{2}{c|}{\textbf{bug}} &
+	\multicolumn{2}{c|}{\textbf{suggestion}} &
+	\multicolumn{2}{c|}{\textbf{question}}
+	
+	\\
+	\hline
+
+	% Data
+	0.0 & 0.32 & 0.00 & 0.24 & 0.01 & 0.25 & 0.01 \\
+	0.1 & 0.36 & 0.02 & 0.31 & 0.13 & 0.23 & 0.06 \\
+	0.2 & 0.38 & 0.02 & 0.31 & 0.13 & 0.28 & 0.11 \\
+	0.3 & 0.40 & 0.01 & 0.32 & 0.14 & 0.19 & 0.00 \\
+	0.4 & 0.43 & 0.05 & 0.25 & 0.04 & 0.21 & 0.05 \\
+	0.5 & 0.44 & 0.06 & 0.43 & 0.24 & 0.19 & 0.00 \\
+	0.6 & 0.45 & 0.06 & 0.32 & 0.17 & 0.24 & 0.06 \\
+	0.7 & 0.48 & 0.07 & 0.41 & 0.22 & 0.24 & 0.06 \\
+	0.8 & 0.44 & 0.07 & 0.40 & 0.21 & 0.29 & 0.20 \\
+	0.9 & 0.44 & 0.06 & 0.23 & 0.00 & 0.28 & 0.19 \\
+	1.0 & 0.46 & 0.05 & 0.23 & 0.00 & 0.34 & 0.24 \\
+
+	\hline
+	\end{tabular}
+	\label{tbl:mi_errors_k3}
+	\caption{Error rate results for $k = 3$.}
+\end{table}
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\linewidth]{charts/k3errors.pdf}
+	\label{fig:mi_errors_k3}
+	\caption{Error rate results for $k = 3$.}
+\end{figure}
+
+The results show slightly higher error rates, probably because the classifier is now overfitting the data. However it does show
+the effect of the feature selection process much more clearly. The feature selection has a negative effect on \textbf{bug}
+despite it improving it when a higher value of $k$ is used. For \textbf{suggestion} and \textbf{question}, the accuracy appears
+to be highest when ignoring any features lower than 0.3 - 0.4 bits but otherwise is generally worse when no features are ignored
+or when nearly all the features are ignored. Unfortunately, the uncertainty is quite high as shown with the error bars in
+Figure~\ref{fig:mi_errors_k3} which could be due to the training data being far too random.
+
 \subsubsection{Conditional Mutual Information}
-\todo{}
-\cite{fast_binary_feature_selection}
+Conditional mutual information extends the mutual information technique by taking into account pairs of features in order to
+reduce redundancy.
 
-\subsubsection{The `Wrapper' method}
-\todo{}
+Algorithm~\ref{alg:cmim}, adapted from \emph{``Fast Binary Feature Selection''} \cite{fast_binary_feature_selection}, shows a
+na\"{i}ve approach to computing the best features using conditional mutual information.
 
-\subsubsection{Filter methods}
+\begin{algorithm}
+	\label{alg:cmim}
+	\caption{Na\"{i}ve CMIM}
+	\begin{algorithmic}
+		\FOR {$i = 1 \dots N$}
+			\STATE $s[i] \gets I(l;f_i)$
+		\ENDFOR
+		\FOR {$j = 1 \dots N$}
+			\STATE $nu[j] = \mathrm{argmax}_i s[i]$
+			\FOR {$i = 1 \dots N$}
+				\STATE $s[i] \gets \min(s[i], I(l;f_i | f_{nu[j]}))$
+			\ENDFOR
+		\ENDFOR
+	\end{algorithmic}
+\end{algorithm}
+
 \todo{}
 
 %--------------------------------------------------------------------------
@@ -220,7 +293,29 @@ of less than 0.5 bits, there were only 11 features remaining which produced an e
 % Conclusions
 %--------------------------------------------------------------------------
 \section{Conclusions}
-\todo{}
+The aim of the project was to apply feature selection techniques to improve the accuracy of GitHub label classifiers. All the
+features used were binary values representing whether a particular word or phrase was present in the issue body text. This meant
+that the techniques used has to cater only for binary data. This also included the distance function also used in the k-NN
+classifier. The focus was primarily on feature selection, so only one classifier was tested. It was assumed that a k-NN
+classifier would provide a generalised result as it is non-linear. It is possible that some classifiers such as Support Vector
+Machines (SVM) or Random Forests could perform better with the selected data and be more sensitive to the feature selection
+process - but hopefully not too different from the k-NN classifier. Further experiments could be conducted with different
+classifiers to prove this.
+
+Data was only exported from three different repositories, a total of 1797 examples and 93 features. It is likely some of these
+were labelled incorrectly which could significantly affect the training data. The training data should include many more
+repositories to improve generalisation and reduce the ratio of correctly labels to incorrectly labelled examples. Other features
+could also be examined, such as the user that submitted the issue or the number whether the issue body contained an image.
+
+The feature selection techniques, particularly the mutual information calculations showed that over half of the features were
+irrelevant. These were mostly stop words or words found in most paragraphs of text. Some of these should have probably been
+filtered out during the text mining stage. The remaining features correlated more with the labels, in either a positive or
+negative way as seen in Figure~\ref{fig:mi_prob}. For example for the \textbf{bug} label, the features \emph{reproduce} and
+\emph{crash} had high probability and high entropy meaning that if they are within the issue text, the issue is likely a bug.
+Where as the features \emph{nice}, \emph{thought} and \emph{cool} had a very low probability but a high entropy meaning that if
+they were in the issue text, it is likely NOT a bug. This was promising as the nature of the words clearly match the results.
+Mutual information in its simplest form therefore appears to provide a trustworthy measurement of correlation between a feature
+and a bug. It however does not help reduce redundant features.
 
 %--------------------------------------------------------------------------
 % Notes / ideas

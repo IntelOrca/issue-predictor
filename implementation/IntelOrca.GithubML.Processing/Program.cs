@@ -44,17 +44,24 @@ namespace IntelOrca.GithubML.Processing
 				.Select(x => 1)
 				.ToArray();
 
-			RankByMutalInformation(examples.ToArray());
-			// return;
+			Example[] filteredExamples = examples.ToArray();
+
+			int label = 2;
 
 			KnnClassifier knn = new KnnClassifier(23);
-			double errorRate = TestNTimes(knn, examples, 5, 5);
+			for (double min = 0; min < 1.0; min += 0.1) {
+				RankByMutalInformation(filteredExamples, label, min);
+				Tuple<double, double> meanStd = TestNTimes(knn, examples, 5, 5, label);
 
-			Console.WriteLine("Error rate: {0:0.00}", errorRate);
+				Console.WriteLine("Error rate: mean {0:0.00}, std {1:0.00} for {2:0.00}", meanStd.Item1, meanStd.Item2, min);
+			}
+
+			// CMIM(filteredExamples);
+			// return;			
 			Console.ReadLine();
 		}
 
-		private static void RankByMutalInformation(Example[] examples)
+		private static void RankByMutalInformation(Example[] examples, int label, double minimumMutualInformation)
 		{
 			int numFeatures = examples[0].Features.Length;
 			FeatureWeights = new int[numFeatures];
@@ -64,8 +71,8 @@ namespace IntelOrca.GithubML.Processing
 			double[] probability = new double[numFeatures];
 			double[] mutualInformation = new double[numFeatures];
 			for (int i = 0; i < numFeatures; i++) {
-				probability[i] = GetProbability(examples, i, 0);
-				mutualInformation[i] = MutualInformation(examples, i, 0);
+				probability[i] = GetProbability(examples, i, label);
+				mutualInformation[i] = MutualInformation(examples, i, label);
 
 				// var meh = examples.Where(x => x.Features[i] != 0).ToArray();
 				// mutualInformation[i] = meh.Length == 0 ?
@@ -82,13 +89,13 @@ namespace IntelOrca.GithubML.Processing
 
 			for (int i = 0; i < ranking.Length; i++) {
 				var r = ranking[i];
-				FeatureWeights[r.Feature] = (int)(r.MI * 100);
-				if (r.MI < 0.5)
-					FeatureWeights[r.Feature] = 0;
+				FeatureWeights[r.Feature] = Double.IsNaN(r.MI) || r.MI < minimumMutualInformation ?
+					0 :
+					(int)(r.MI * 10000);
 			}
 
-			int wtf = FeatureWeights.Count(x => x != 0);
-			Console.WriteLine(wtf);
+			int numUsedFeatures = FeatureWeights.Count(x => x != 0);
+			// Console.WriteLine(numUsedFeatures);
 
 			// FeatureWeights[i] = 0;
 			// if (!Double.IsNaN(mutualInformation[i])) {
@@ -101,10 +108,75 @@ namespace IntelOrca.GithubML.Processing
 			// Console.ReadLine();
 		}
 
+		private static void CMIM(Example[] examples)
+		{
+			int numFeatures = examples[0].Features.Length;
+			FeatureWeights = new int[numFeatures];
+
+			double[] score = new double[numFeatures];
+			for (int i = 0; i < numFeatures; i++)
+				score[i] = MutualInformation(examples, i, 0);
+
+			int[] nu = new int[numFeatures];
+			for (int k = 0; k < numFeatures; k++) {
+				double maxScore = score[0];
+				nu[k] = 0;
+				for (int i = 1; i < numFeatures; i++) {
+					if (score[i] > maxScore) {
+						maxScore = score[i];
+						nu[k] = i;
+					}
+				}
+
+				for (int i = 0; i < numFeatures; i++)
+					score[i] = Math.Min(score[i], ConditionalMutualInformation(examples, i, nu[k], 0));
+			}
+
+			var ranking = Enumerable.Range(0, numFeatures)
+				.Select(i => new { Feature = i, CMIM = score[i] })
+				.Where(x => !Double.IsNaN(x.CMIM))
+				.OrderBy(x => x.CMIM)
+				.ToArray();
+
+			for (int i = 0; i < ranking.Length; i++) {
+				var r = ranking[i];
+				FeatureWeights[r.Feature] = i * i; // (int)(r.CMIM * 10000);
+				// if (r.CMIM < 0.5)
+				//	FeatureWeights[r.Feature] = 0;
+			}
+
+			int numUsedFeatures = FeatureWeights.Count(x => x != 0);
+		}
+
+		private static double ConditionalMutualInformation(IReadOnlyCollection<Example> examples, int featureA, int featureB, int label)
+		{
+			// I(Xa|Xb;Y) = H(Y) - H(Y|(Xa|Xb))
+
+			// p(Y)
+			// p(Y|(Xa|Xb))
+			double pY = examples.Average(x => x.Labels[label] ? 1 : 0);
+			double pYGivenXaGivenXb = GetProbability(examples, featureA, featureB, 0);
+
+			return BinaryEntropy(pY, 2) - BinaryEntropy(pYGivenXaGivenXb, 2);
+		}
+
 		private static double GetProbability(IReadOnlyCollection<Example> examples, int feature, int label)
 		{
 			var examplesGivenX = examples
 				.Where(x => x.Features[feature] != 0)
+				.ToArray();
+
+			if (examplesGivenX.Length == 0)
+				return Double.NaN;
+
+			return examplesGivenX.Average(x => x.Labels[label] ? 1 : 0);
+		}
+
+		private static double GetProbability(IReadOnlyCollection<Example> examples, int featureA, int featureB, int label)
+		{
+			var examplesGivenX = examples
+				.Where(x => x.Features[featureA] != 0)
+				.Where(x => x.Features[featureB] != 0)
 				.ToArray();
 
 			if (examplesGivenX.Length == 0)
@@ -146,16 +218,19 @@ namespace IntelOrca.GithubML.Processing
 			return -((p * Math.Log(p, logBase)) + (notP * Math.Log(notP, logBase)));
 		}
 
-		private static double TestNTimes(IClassifier classifier, IEnumerable<Example> examples, int n, int folds)
+		private static Tuple<double, double> TestNTimes(IClassifier classifier, IEnumerable<Example> examples, int n, int folds, int label)
 		{
-			double errorRate = 0;
-			for (int repeats = 0; repeats < n; repeats++)
-				errorRate += CrossValidate(classifier, examples, folds);
+			double[] errorRates = Enumerable.Range(0, n)
+				.Select(x => CrossValidate(classifier, examples, folds, label))
+				.ToArray();
 
-			return errorRate / n;
+			double mean = errorRates.Average();
+			double std = Math.Sqrt(errorRates.Select(x => Math.Pow(x - mean, 2)).Average());
+
+			return new Tuple<double, double>(mean, std);
 		}
 
-		private static double CrossValidate(IClassifier classifier, IEnumerable<Example> examples, int folds)
+		private static double CrossValidate(IClassifier classifier, IEnumerable<Example> examples, int folds, int label)
 		{
 			double errorRate = 0;
 
@@ -174,8 +249,9 @@ namespace IntelOrca.GithubML.Processing
 				classifier.Train(trainingData);
 				classifier.Test(splitExamples[i]);
 
-				errorRate += classifier.ErrorRates[0];
-				// errorRate += classifier.AverageErrorRate;
+				errorRate += label == -1 ?
+					classifier.AverageErrorRate :
+					classifier.ErrorRates[label];
 			}
 			return errorRate / folds;
 		}
