@@ -6,7 +6,7 @@ using System.Linq;
 
 namespace IntelOrca.GithubML.Processing
 {
-	internal class Program
+	internal static class Program
 	{
 		private static Random _random = new Random();
 		public static string[] _labelNames = new[] { "bug", "suggestion", "question" };
@@ -27,37 +27,87 @@ namespace IntelOrca.GithubML.Processing
 			foreach (string csvFile in csvFiles)
 				examples.AddRange(Example.FromCsv(csvFile));
 
+			// Filter examples
 			// var filteredExamples = examples.Where(x => x.Labels.Contains(true)).ToArray();
 			// examples.Clear();
 			// examples.AddRange(filteredExamples);
 
+			// Initialise all feature weights to 1
 			FeatureWeights = Enumerable.Range(0, examples[0].Features.Length)
 				.Select(x => 1)
 				.ToArray();
 
-			int label = 0;
+			// Experiments
+			RawExperiment(examples);
+			// WrapperExperiment(examples);
+			// MIExperiement(examples);
+			// CMIMExperiement(examples);
+		}
 
-			// FeatureWeights = WrapperMethod(examples, label);
-			
-			KnnClassifier knn = new KnnClassifier(23);
+		private static void RawExperiment(IReadOnlyList<Example> examples)
+		{
+			for (int label = 0; label < 3; label++) {
+				foreach (int k in new[] { 1, 3, 7, 11, 17, 23, 31, 43, 53 }) {
+					var knn = new KnnClassifier(k);
 
-			// Mutual Information
-			// for (double min = 0; min < 1.0; min += 0.1) {
-			// 	RankByMutalInformation(examples, label, min);
-			// 	Tuple<double, double> meanStd = TestNTimes(knn, examples, 5, 5, label);
-			// 	Console.WriteLine("Error rate: mean {0:0.00}, std {1:0.00} for {2:0.00}", meanStd.Item1, meanStd.Item2, min);
-			// }
+					Tuple<double, double> meanStd = TestNTimes(knn, examples, 5, 5, label);
+					Console.WriteLine(
+						"{0}, k{1} Error rate: mean {2:0.00}, std {3:0.00}",
+						_labelNames[label],
+						k,
+						meanStd.Item1,
+						meanStd.Item2
+					);
+				}
+			}
 
-			// CMIM
-			for (int i = 0; i < 3; i++) {
-				label = i;
+			Console.ReadLine();
+		}
 
+		private static void WrapperExperiment(IReadOnlyList<Example> examples)
+		{
+			for (int label = 0; label < 3; label++) {
+				FeatureWeights = WrapperMethod(examples, label);
+			}
+		}
+
+		private static void MIExperiement(IReadOnlyList<Example> examples)
+		{
+			for (int label = 0; label < 3; label++) {
+				for (double min = 0; min < 1.0; min += 0.1) {
+					RankByMutalInformation(examples, label, min);
+					foreach (int k in new[] { 3, 23 }) {
+						var knn = new KnnClassifier(k);
+
+						Tuple<double, double> meanStd = TestNTimes(knn, examples, 5, 5, label);
+						Console.WriteLine(
+							"Error rate: mean {0:0.00}, std {1:0.00} for {2:0.00} ({3}), k = {4}",
+							meanStd.Item1,
+							meanStd.Item2,
+							min,
+							_labelNames[label],
+							k
+						);
+					}
+				}
+			}
+		}
+
+		private static void CMIMExperiement(IReadOnlyList<Example> examples)
+		{
+			for (int label = 0; label < 3; label++) {
 				CMIM(examples, label);
 				foreach (int k in new[] { 1, 3, 7, 11, 17, 23, 31, 43, 53 }) {
-					knn = new KnnClassifier(k);
-					
+					var knn = new KnnClassifier(k);
+
 					Tuple<double, double> meanStd = TestNTimes(knn, examples, 5, 5, label);
-					Console.WriteLine("{0}, k{1} Error rate: mean {2:0.00}, std {3:0.00}", _labelNames[label], k, meanStd.Item1, meanStd.Item2);
+					Console.WriteLine(
+						"{0}, k{1} Error rate: mean {2:0.00}, std {3:0.00}",
+						_labelNames[label],
+						k,
+						meanStd.Item1,
+						meanStd.Item2
+					);
 				}
 			}
 

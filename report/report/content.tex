@@ -135,7 +135,16 @@ final test is then used as the measure of performance.
 
 % Initial results
 Without any feature selection, an average error rate across all labels using cross validation was 26\%. The error rate for just
-the \textbf{bug} label was significantly higher at 36\%.
+the \textbf{bug} label was significantly higher at 36\%. This was across a range of different $k$ values between 1 and 53.
+Figure~\ref{fig:raw_errors} shows the error rates for each label over the value $k$. The uncertainty was quite low with
+standard deviation values below 0.02, this can be seen from the error bars.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{charts/cmim_errors.pdf}
+    \caption{Raw error rate results prior to feature selection.}
+    \label{fig:raw_errors}
+\end{figure}
 
 \subsection{Feature selection}
 The k-NN classifier was modified to apply feature selection. This was achieved by allowing each feature to have an independent
@@ -207,7 +216,7 @@ To determine whether a feature correlates to a particular class such as \textit{
 using equation~\ref{eq:mutual_information}, where $H(Y)$ is the entropy of the class and $H(Y|X)$ is the entropy of the class
 given the feature. This will produce numbers within the range $0 \leq I(X;Y) \leq \min(H(X), H(Y))$. The higher the value, the
 more the feature correlates to the class, either when it exists or doesn't exist. Each feature can then have an independent
-weight based on the mutual information for a particular class or by its rank within the set of features.
+weight based on the mutual information (MI) for a particular class or by its rank within the set of features.
 \begin{equation}
     \label{eq:mutual_information}
     I(X;Y) = H(Y) - H(Y|X)
@@ -271,14 +280,14 @@ Table~\ref{tbl:mi_errors_k3} and Figure~\ref{fig:mi_errors_k3}.
 
     \hline
     \end{tabular}
-    \caption{Error rate results for $k = 3$.}
+    \caption{Error rate results for $k = 3$ after MI feature selection.}
     \label{tbl:mi_errors_k3}
 \end{table}
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=\linewidth]{charts/k3errors.pdf}
-    \caption{Error rate results for $k = 3$.}
+    \caption{Error rate results for $k = 3$ after MI feature selection.}
     \label{fig:mi_errors_k3}
 \end{figure}
 
@@ -318,26 +327,33 @@ ignored which left 44, 55 and 44 features for \textit{bug}, \textit{suggestion} 
 were then ranked linearly by their CMIM score. The new feature weights were then used for the k-NN classifier for different
 values of $k$. The results can be seen in Figure~\ref{fig:cmim_errors}.
 
+Although almost half the features were ignored, the error rates were almost identical to the error rates prior to feature
+selection. One observation made was that the best value of $k$ for CMIM produced the lowest error rates for all three labels.
+If this is a natural effect of the feature selection, then it is a good achievement as the same training parameters can be used
+to achieve the best performance for all labels, therefore requiring only one training set to classify all three labels. It could
+however be a coincidence, more experimentation would be required to prove this.
+
 \begin{figure}[h]
     \centering
     \includegraphics[width=\linewidth]{charts/cmim_errors.pdf}
-    \caption{Error rate results for CMIM.}
+    \caption{Error rate results after CMIM feature selection.}
     \label{fig:cmim_errors}
 \end{figure}
-
-Figure~\ref{fig:cmim_errors} shows very consistent error rates over different values of $k$. This suggests that the CMIM
-algorithm was able to select and rank important features in such a way that the data points for a particular class are closer
-together. The error rate was lowest for all labels when $k = 23$. This is a good achievement as the same training parameters can
-be used to achieve the best performance for all labels and is overall an improvement as opposed to when there was no feature
-selection at all. Almost half of the features were removed, either because they were irrelevant or redundant. When repeating the
-experiment, the variance of the error rates were extremely low which shows that the algorithm was able to produce values of a
-low uncertainty. This can also be seen by the error bars in Figure~\ref{fig:cmim_errors}.
 
 %--------------------------------------------------------------------------
 % Analysis
 %--------------------------------------------------------------------------
 \section{Analysis}
 \todo{}
+
+When performing feature selection using `conditional mutual information', nearly half of the features were ignored due to them
+being irrelevant or redundant by comparing the information between two features. It however did not improve the accuracy. This
+is clearly shown by the high similarity between the error rates prior to feature selection and the error rates after the CMIM
+selection, Figure~\ref{fig:raw_errors} and Figure~\ref{fig:cmim_errors} respectively. While there was no improvement in
+accuracy, there would have been improvement in efficiency as there are many features that are insignificant. The reduced noise
+could improve other classifiers, particularly if they use linear learning algorithms.
+
+\par
 \cite{stability_feature_ranking}
 \cite{redundant_feature_elimination}
 
