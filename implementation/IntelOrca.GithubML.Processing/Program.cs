@@ -9,6 +9,7 @@ namespace IntelOrca.GithubML.Processing
 	internal class Program
 	{
 		private static Random _random = new Random();
+		public static string[] _labelNames = new[] { "bug", "suggestion", "question" };
 		public static string[] _featureNames;
 
 		public static int[] FeatureWeights;
@@ -34,22 +35,32 @@ namespace IntelOrca.GithubML.Processing
 				.Select(x => 1)
 				.ToArray();
 
-			Example[] filteredExamples = examples.ToArray();
-			
 			int label = 0;
 
-			FeatureWeights = WrapperMethod(examples, label);
-
+			// FeatureWeights = WrapperMethod(examples, label);
+			
 			KnnClassifier knn = new KnnClassifier(23);
-			for (double min = 0; min < 1.0; min += 0.1) {
-				// RankByMutalInformation(filteredExamples, label, min);
-				Tuple<double, double> meanStd = TestNTimes(knn, examples, 5, 5, label);
 
-				Console.WriteLine("Error rate: mean {0:0.00}, std {1:0.00} for {2:0.00}", meanStd.Item1, meanStd.Item2, min);
+			// Mutual Information
+			// for (double min = 0; min < 1.0; min += 0.1) {
+			// 	RankByMutalInformation(examples, label, min);
+			// 	Tuple<double, double> meanStd = TestNTimes(knn, examples, 5, 5, label);
+			// 	Console.WriteLine("Error rate: mean {0:0.00}, std {1:0.00} for {2:0.00}", meanStd.Item1, meanStd.Item2, min);
+			// }
+
+			// CMIM
+			for (int i = 0; i < 3; i++) {
+				label = i;
+
+				CMIM(examples, label);
+				foreach (int k in new[] { 1, 3, 7, 11, 17, 23, 31, 43, 53 }) {
+					knn = new KnnClassifier(k);
+					
+					Tuple<double, double> meanStd = TestNTimes(knn, examples, 5, 5, label);
+					Console.WriteLine("{0}, k{1} Error rate: mean {2:0.00}, std {3:0.00}", _labelNames[label], k, meanStd.Item1, meanStd.Item2);
+				}
 			}
 
-			// CMIM(filteredExamples);
-			// return;			
 			Console.ReadLine();
 		}
 
@@ -140,7 +151,7 @@ namespace IntelOrca.GithubML.Processing
 			return featuresToInclude.ToArray();
 		}
 
-		private static void RankByMutalInformation(Example[] examples, int label, double minimumMutualInformation)
+		private static void RankByMutalInformation(IReadOnlyList<Example> examples, int label, double minimumMutualInformation)
 		{
 			int numFeatures = examples[0].Features.Length;
 			FeatureWeights = new int[numFeatures];
@@ -187,14 +198,14 @@ namespace IntelOrca.GithubML.Processing
 			// Console.ReadLine();
 		}
 
-		private static void CMIM(Example[] examples)
+		private static void CMIM(IReadOnlyList<Example> examples, int label)
 		{
 			int numFeatures = examples[0].Features.Length;
 			FeatureWeights = new int[numFeatures];
 
 			double[] score = new double[numFeatures];
 			for (int i = 0; i < numFeatures; i++)
-				score[i] = MutualInformation(examples, i, 0);
+				score[i] = MutualInformation(examples, i, label);
 
 			int[] nu = new int[numFeatures];
 			for (int k = 0; k < numFeatures; k++) {
@@ -208,8 +219,12 @@ namespace IntelOrca.GithubML.Processing
 				}
 
 				for (int i = 0; i < numFeatures; i++)
-					score[i] = Math.Min(score[i], ConditionalMutualInformation(examples, i, nu[k], 0));
+					score[i] = Math.Min(score[i], ConditionalMutualInformation(examples, i, nu[k], label));
 			}
+
+			//for (int i = 0; i < numFeatures; i++) {
+			//	Console.WriteLine("{0},{1},{2}", _featureNames[i], score[i], nu[i]);
+			//}
 
 			var ranking = Enumerable.Range(0, numFeatures)
 				.Select(i => new { Feature = i, CMIM = score[i] })

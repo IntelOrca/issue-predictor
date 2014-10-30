@@ -5,11 +5,11 @@
 %--------------------------------------------------------------------------
 \definecolor{light-gray}{gray}{0.9}
 \newcommand{\todo}[1]{
-	\colorbox{light-gray}{
-		\parbox{\linewidth}{
-			\textbf{TODO} #1
-		}
-	}
+    \colorbox{light-gray}{
+        \parbox{\linewidth}{
+            \textbf{TODO} #1
+        }
+    }
 }
 
 \nocite{github}
@@ -103,8 +103,8 @@ Equation~\ref{eq:hamming}. This is the total number of features that are differe
 examples will produce a distance of 0 and will increase, the more words and phrases that are only present in one example and not
 the other.
 \begin{equation}
-	\label{eq:hamming}
-	\mathrm{hamming}(x,x') = \sum^d_{j=1} \delta (x_{j} \neq x'_{j})
+    \label{eq:hamming}
+    \mathrm{hamming}(x,x') = \sum^d_{j=1} \delta (x_{j} \neq x'_{j})
 \end{equation}
 where $\delta$ is the indicator function which returns 0 if the word or phrase is present in both examples or neither examples
 and 1 if the word or phrase is only present in one example but not the other.
@@ -143,8 +143,8 @@ weight which affected the distance between two examples. Each feature selection 
 $w_f = 0$ is a feature that is ignored. This distance function is revised in equation~\ref{eq:hamming_weights}. This will
 produce higher distances for features that correlate more. If the weight is 0, the feature is implicitly ignored.
 \begin{equation}
-	\label{eq:hamming_weights}
-	\mathrm{hamming}(x,x') = \sum^d_{j=1} w_{j} \delta (x_{j} \neq x'_{j})
+    \label{eq:hamming_weights}
+    \mathrm{hamming}(x,x') = \sum^d_{j=1} w_{j} \delta (x_{j} \neq x'_{j})
 \end{equation}
 where $w_{j}$ is the weight of the feature.
 
@@ -163,8 +163,8 @@ weight of 0 are concluded as noise. This does not take into account pairs of fea
 features are searched in a random order so that the final result is slightly more generalised. See algorithm~\ref{alg:wrapper}.
 
 \begin{algorithm}
-    \label{alg:wrapper}
     \caption{Wrapper method}
+    \label{alg:wrapper}
     \begin{algorithmic}
         \STATE $w[0..N] \gets 1$
         \STATE $best\_ error \gets \mathrm{test\_ classifier}(w)$
@@ -188,19 +188,19 @@ Entropy shows us the measurement of information for a set of data or in other wo
 be used to measure the amount of information gain for a particular feature. By using equation~\ref{eq:entropy}, where $X$ is
 the set of feature values or label values, the amount information in the probability distribution of the set can be calculated.
 \begin{align}
-	\label{eq:entropy}
-	H(X) = -\sum_{x \in X} p(x) \log p(x)
+    \label{eq:entropy}
+    H(X) = -\sum_{x \in X} p(x) \log p(x)
 \end{align}
 
 Because this scenario only contains binary features (non-existent and existent words / phrases) and binary classes
 (e.g. bug or not bug), equation~\ref{eq:binary_entropy} can be used instead which derives from equation~\ref{eq:entropy} but
 with the probability and compliment substituted for the summation.
 \begin{equation}
-	\label{eq:binary_entropy}
-	\begin{split}
-		H(X) &= -(p(x) \log p(x) + p(x^c)     \log p(x^c)    \\
-		H(X) &= -(p(x) \log p(x) + (1 - p(x)) \log(1 - p(x))
-	\end{split}
+    \label{eq:binary_entropy}
+    \begin{split}
+        H(X) &= -(p(x) \log p(x) + p(x^c)     \log p(x^c)    \\
+        H(X) &= -(p(x) \log p(x) + (1 - p(x)) \log(1 - p(x))
+    \end{split}
 \end{equation}
 
 To determine whether a feature correlates to a particular class such as \textit{bug}, the mutual information can be calculated
@@ -209,8 +209,8 @@ given the feature. This will produce numbers within the range $0 \leq I(X;Y) \le
 more the feature correlates to the class, either when it exists or doesn't exist. Each feature can then have an independent
 weight based on the mutual information for a particular class or by its rank within the set of features.
 \begin{equation}
-	\label{eq:mutual_information}
-	I(X;Y) = H(Y) - H(Y|X)
+    \label{eq:mutual_information}
+    I(X;Y) = H(Y) - H(Y|X)
 \end{equation}
 
 Figure~\ref{fig:mi_prob} shows the probability, $p(\mathrm{bug}|f)$ and mutual information, $I(f,\mathrm{bug})$ for each feature
@@ -220,10 +220,10 @@ labelled \textit{bug}. The closer the probability is to 0.5, the lower the mutua
 with very low probability and very high probability will have a high weight as they correlate the most to the label
 \textit{bug}.
 \begin{figure}[h]
-	\centering
-	\includegraphics[width=\linewidth]{charts/mi_prob.pdf}
-	\label{fig:mi_prob}
-	\caption{Feature probability and mutual information distribution.}
+    \centering
+    \includegraphics[width=\linewidth]{charts/mi_prob.pdf}
+    \caption{Feature probability and mutual information distribution.}
+    \label{fig:mi_prob}
 \end{figure}
 
 After calculating the mutual information for each feature and using it for the feature's weight that is applied in the k-NN
@@ -240,46 +240,46 @@ but not for \textit{bug}. The same tests were performed again with $k = 3$, the 
 Table~\ref{tbl:mi_errors_k3} and Figure~\ref{fig:mi_errors_k3}.
 
 \begin{table}[h]
-	\centering
-	\begin{tabular}{|c||cc|cc|cc|}
-	\hline
+    \centering
+    \begin{tabular}{|c||cc|cc|cc|}
+    \hline
 
-	% First row
-	& \multicolumn{6}{c|}{error rate} \\
+    % First row
+    & \multicolumn{6}{c|}{error rate} \\
 
-	% Second row
-	minimum &
-	\multicolumn{2}{c|}{\textbf{bug}} &
-	\multicolumn{2}{c|}{\textbf{suggestion}} &
-	\multicolumn{2}{c|}{\textbf{question}}
-	
-	\\
-	\hline
+    % Second row
+    minimum &
+    \multicolumn{2}{c|}{\textbf{bug}} &
+    \multicolumn{2}{c|}{\textbf{suggestion}} &
+    \multicolumn{2}{c|}{\textbf{question}}
+    
+    \\
+    \hline
 
-	% Data
-	0.0 & 0.32 & 0.00 & 0.24 & 0.01 & 0.25 & 0.01 \\
-	0.1 & 0.36 & 0.02 & 0.31 & 0.13 & 0.23 & 0.06 \\
-	0.2 & 0.38 & 0.02 & 0.31 & 0.13 & 0.28 & 0.11 \\
-	0.3 & 0.40 & 0.01 & 0.32 & 0.14 & 0.19 & 0.00 \\
-	0.4 & 0.43 & 0.05 & 0.25 & 0.04 & 0.21 & 0.05 \\
-	0.5 & 0.44 & 0.06 & 0.43 & 0.24 & 0.19 & 0.00 \\
-	0.6 & 0.45 & 0.06 & 0.32 & 0.17 & 0.24 & 0.06 \\
-	0.7 & 0.48 & 0.07 & 0.41 & 0.22 & 0.24 & 0.06 \\
-	0.8 & 0.44 & 0.07 & 0.40 & 0.21 & 0.29 & 0.20 \\
-	0.9 & 0.44 & 0.06 & 0.23 & 0.00 & 0.28 & 0.19 \\
-	1.0 & 0.46 & 0.05 & 0.23 & 0.00 & 0.34 & 0.24 \\
+    % Data
+    0.0 & 0.32 & 0.00 & 0.24 & 0.01 & 0.25 & 0.01 \\
+    0.1 & 0.36 & 0.02 & 0.31 & 0.13 & 0.23 & 0.06 \\
+    0.2 & 0.38 & 0.02 & 0.31 & 0.13 & 0.28 & 0.11 \\
+    0.3 & 0.40 & 0.01 & 0.32 & 0.14 & 0.19 & 0.00 \\
+    0.4 & 0.43 & 0.05 & 0.25 & 0.04 & 0.21 & 0.05 \\
+    0.5 & 0.44 & 0.06 & 0.43 & 0.24 & 0.19 & 0.00 \\
+    0.6 & 0.45 & 0.06 & 0.32 & 0.17 & 0.24 & 0.06 \\
+    0.7 & 0.48 & 0.07 & 0.41 & 0.22 & 0.24 & 0.06 \\
+    0.8 & 0.44 & 0.07 & 0.40 & 0.21 & 0.29 & 0.20 \\
+    0.9 & 0.44 & 0.06 & 0.23 & 0.00 & 0.28 & 0.19 \\
+    1.0 & 0.46 & 0.05 & 0.23 & 0.00 & 0.34 & 0.24 \\
 
-	\hline
-	\end{tabular}
-	\label{tbl:mi_errors_k3}
-	\caption{Error rate results for $k = 3$.}
+    \hline
+    \end{tabular}
+    \caption{Error rate results for $k = 3$.}
+    \label{tbl:mi_errors_k3}
 \end{table}
 
 \begin{figure}[h]
-	\centering
-	\includegraphics[width=\linewidth]{charts/k3errors.pdf}
-	\label{fig:mi_errors_k3}
-	\caption{Error rate results for $k = 3$.}
+    \centering
+    \includegraphics[width=\linewidth]{charts/k3errors.pdf}
+    \caption{Error rate results for $k = 3$.}
+    \label{fig:mi_errors_k3}
 \end{figure}
 
 The results show slightly higher error rates, probably because the classifier is now overfitting the data. However it does show
@@ -297,22 +297,41 @@ Algorithm~\ref{alg:cmim}, adapted from \emph{``Fast Binary Feature Selection''} 
 na\"{i}ve approach to computing the best features using conditional mutual information.
 
 \begin{algorithm}
-	\label{alg:cmim}
-	\caption{Na\"{i}ve CMIM}
-	\begin{algorithmic}
-		\FOR {$i \gets 1 \dots N$}
-			\STATE $s[i] \gets I(l;f_i)$
-		\ENDFOR
-		\FOR {$j \gets 1 \dots N$}
-			\STATE $nu[j] = \mathrm{argmax}_i s[i]$
-			\FOR {$i \gets 1 \dots N$}
-				\STATE $s[i] \gets \min(s[i], I(l;f_i | f_{nu[j]}))$
-			\ENDFOR
-		\ENDFOR
-	\end{algorithmic}
+    \caption{Na\"{i}ve CMIM}
+    \label{alg:cmim}
+    \begin{algorithmic}
+        \FOR {$i \gets 1 \dots N$}
+            \STATE $s[i] \gets I(l;f_i)$
+        \ENDFOR
+        \FOR {$j \gets 1 \dots N$}
+            \STATE $nu[j] = \mathrm{argmax}_i s[i]$
+            \FOR {$i \gets 1 \dots N$}
+                \STATE $s[i] \gets \min(s[i], I(l;f_i | f_{nu[j]}))$
+            \ENDFOR
+        \ENDFOR
+    \end{algorithmic}
 \end{algorithm}
 
-\todo{}
+After running the algorithm, each feature had a calculated CMIM score. Some scores were set to `not a number' (NaN) as the
+calculation failed due to some probabilities equating to 0 when calculating the entropy of the features. These features were
+ignored which left 44, 55 and 44 features for \textit{bug}, \textit{suggestion} and \textit{question} respectively. The features
+were then ranked linearly by their CMIM score. The new feature weights were then used for the k-NN classifier for different
+values of $k$. The results can be seen in Figure~\ref{fig:cmim_errors}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{charts/cmim_errors.pdf}
+    \caption{Error rate results for CMIM.}
+    \label{fig:cmim_errors}
+\end{figure}
+
+Figure~\ref{fig:cmim_errors} shows very consistent error rates over different values of $k$. This suggests that the CMIM
+algorithm was able to select and rank important features in such a way that the data points for a particular class are closer
+together. The error rate was lowest for all labels when $k = 23$. This is a good achievement as the same training parameters can
+be used to achieve the best performance for all labels and is overall an improvement as opposed to when there was no feature
+selection at all. Almost half of the features were removed, either because they were irrelevant or redundant. When repeating the
+experiment, the variance of the error rates were extremely low which shows that the algorithm was able to produce values of a
+low uncertainty. This can also be seen by the error bars in Figure~\ref{fig:cmim_errors}.
 
 %--------------------------------------------------------------------------
 % Analysis
