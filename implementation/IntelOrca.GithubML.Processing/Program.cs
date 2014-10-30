@@ -53,49 +53,6 @@ namespace IntelOrca.GithubML.Processing
 			Console.ReadLine();
 		}
 
-		private static int[] WrapperMethod(IEnumerable<Example> examples, int label)
-		{
-			int numFeatures = _featureNames.Length;
-			KnnClassifier knn = new KnnClassifier(23);
-
-			Queue<int> randomFeatureList = new Queue<int>(
-				Enumerable.Range(0, numFeatures).OrderBy(x => _random.Next())
-			);
-
-			int[] featuresToInclude = FeatureWeights = new int[numFeatures];
-			for (int i = 0; i < numFeatures; i++)
-				featuresToInclude[i] = 1;
-
-			double bestErrorRate = CrossValidate(knn, examples, 5, label);
-
-			Stopwatch sw = new Stopwatch();
-			sw.Start();
-			while (randomFeatureList.Count > 0) {
-				int featureIndex = randomFeatureList.Dequeue();
-				featuresToInclude[featureIndex] = 0;
-
-				double errorRate = CrossValidate(knn, examples, 5, label);
-				if (errorRate < bestErrorRate)
-					bestErrorRate = errorRate;
-				else if (errorRate > bestErrorRate + 4)
-					featuresToInclude[featureIndex] = 1;
-
-				double remainingFeatureCount = randomFeatureList.Count;
-				double featuresDoneSoFar = numFeatures - remainingFeatureCount;
-				double avgTimePerTest = sw.ElapsedMilliseconds / featuresDoneSoFar;
-				double eta = avgTimePerTest * remainingFeatureCount;
-
-				Console.Clear();
-				Console.WriteLine("{0:0.0}%, ETA: {1:0.0} minutes", featuresDoneSoFar / numFeatures * 100, eta / (1000 * 60));
-			}
-
-			for (int i = 0; i < numFeatures; i++)
-				Console.WriteLine(featuresToInclude[i]);
-			Console.ReadLine();
-
-			return featuresToInclude.ToArray();
-		}
-
 		#region Testing / validation
 
 		private static Tuple<double, double> TestNTimes(IClassifier classifier, IEnumerable<Example> examples, int n, int folds, int label)
@@ -139,6 +96,49 @@ namespace IntelOrca.GithubML.Processing
 		#endregion
 
 		#region Feature selection
+
+		private static int[] WrapperMethod(IEnumerable<Example> examples, int label)
+		{
+			int numFeatures = _featureNames.Length;
+			KnnClassifier knn = new KnnClassifier(23);
+
+			Queue<int> randomFeatureList = new Queue<int>(
+				Enumerable.Range(0, numFeatures).OrderBy(x => _random.Next())
+			);
+
+			int[] featuresToInclude = FeatureWeights = new int[numFeatures];
+			for (int i = 0; i < numFeatures; i++)
+				featuresToInclude[i] = 1;
+
+			double bestErrorRate = CrossValidate(knn, examples, 5, label);
+
+			Stopwatch sw = new Stopwatch();
+			sw.Start();
+			while (randomFeatureList.Count > 0) {
+				int featureIndex = randomFeatureList.Dequeue();
+				featuresToInclude[featureIndex] = 0;
+
+				double errorRate = CrossValidate(knn, examples, 5, label);
+				if (errorRate < bestErrorRate)
+					bestErrorRate = errorRate;
+				else if (errorRate > bestErrorRate + 4)
+					featuresToInclude[featureIndex] = 1;
+
+				double remainingFeatureCount = randomFeatureList.Count;
+				double featuresDoneSoFar = numFeatures - remainingFeatureCount;
+				double avgTimePerTest = sw.ElapsedMilliseconds / featuresDoneSoFar;
+				double eta = avgTimePerTest * remainingFeatureCount;
+
+				Console.Clear();
+				Console.WriteLine("{0:0.0}%, ETA: {1:0.0} minutes", featuresDoneSoFar / numFeatures * 100, eta / (1000 * 60));
+			}
+
+			for (int i = 0; i < numFeatures; i++)
+				Console.WriteLine(featuresToInclude[i]);
+			Console.ReadLine();
+
+			return featuresToInclude.ToArray();
+		}
 
 		private static void RankByMutalInformation(Example[] examples, int label, double minimumMutualInformation)
 		{
