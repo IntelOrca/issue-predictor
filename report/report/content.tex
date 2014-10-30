@@ -299,6 +299,7 @@ or when nearly all the features are ignored. Unfortunately, the uncertainty is q
 Figure~\ref{fig:mi_errors_k3} which could be due to the training data being far too random.
 
 \subsubsection{Conditional Mutual Information}
+\label{sec:cmim}
 Conditional mutual information extends the mutual information technique by taking into account pairs of features in order to
 reduce redundancy.
 
@@ -354,11 +355,9 @@ accuracy, there would have been improvement in efficiency as there are many feat
 could improve other classifiers, particularly if they use linear learning algorithms.
 
 \par
-\cite{stability_feature_ranking}
 \cite{redundant_feature_elimination}
-
 \cite{mltechniques_spamfiltering}
-\cite{mlmethods_spamfiltering}
+
 
 %--------------------------------------------------------------------------
 % Conclusions
@@ -370,10 +369,7 @@ meant that the techniques used has to only cater for binary data. This also incl
 classifier. The focus was primarily on feature selection, so only one classifier was tested. It was assumed that a k-NN
 classifier would provide a generalised result as it is non-linear. However Section~\ref{sec:mutual_informaton} showed that just
 a different value of $k$ had a significant impact on the error rate where issues labelled \textit{bug} performed well with a
-lower value of $k$ than issues labelled \textit{suggestion} or \textit{question}. It is possible that some classifiers such as
-Support Vector Machines (SVM) or Random Forests could perform better with the selected data and be more sensitive to the feature
-selection process - but hopefully not too different from the k-NN classifier. Further experiments could be conducted with
-different classifiers to prove this.
+lower value of $k$ than issues labelled \textit{suggestion} or \textit{question}.
 
 Data was only exported from three different repositories, a total of 1797 examples and 93 features. It is likely some of these
 were labelled incorrectly which could significantly affect the training data. The training data should include many more
@@ -392,6 +388,18 @@ probability and high entropy meaning that if they are within the issue text, the
 issue text, it is likely NOT a bug. This was promising as the nature of the words clearly match the results. Mutual information
 in its simplest form therefore appears to provide a trustworthy measurement of correlation between a feature and a bug. It
 however does not help reduce redundant features.
+
+Unfortunately, neither of the feature selection techniques that were investigated were able to increase the accuracy by any
+significant amount. Conditional mutual information, Section~\ref{sec:cmim} showed a slight hint of a more generalised solution
+for achieving the best error rates across all labels using the same training parameters but otherwise showed no improvement
+over the original error rates prior to any feature selection or ranking. Feature selection however does not guarantee any
+improvement \cite{stability_feature_ranking}, particularly if it does not construct or evaluate a classification model. It was
+also noted that in another paper comparing feature selection methods for spam filtering \cite{mlmethods_spamfiltering}, k-NN
+proved to have lower accuracy than other classifiers such as na\"{i}ve Bayes or support vector machines (SVM). It also had a
+very low precision, meaning that it was very sensitive to noise. This could be a possible explanation to the why the k-NN was
+unable to show any improvement even after a variety of feature selection and ranking techniques. Further work to this project
+should include the investigation of other classifiers to determine if they can be improved using the same feature selection
+and ranking techniques used for the k-NN classifier.
 
 %--------------------------------------------------------------------------
 % TODO
