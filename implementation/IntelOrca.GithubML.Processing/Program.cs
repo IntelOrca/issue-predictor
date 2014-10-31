@@ -38,8 +38,8 @@ namespace IntelOrca.GithubML.Processing
 				.ToArray();
 
 			// Experiments
-			RawExperiment(examples);
-			// WrapperExperiment(examples);
+			// RawExperiment(examples);
+			WrapperExperiment(examples);
 			// MIExperiement(examples);
 			// CMIMExperiement(examples);
 		}
@@ -67,7 +67,20 @@ namespace IntelOrca.GithubML.Processing
 		private static void WrapperExperiment(IReadOnlyList<Example> examples)
 		{
 			for (int label = 0; label < 3; label++) {
-				FeatureWeights = WrapperMethod(examples, label);
+				foreach (int k in new[] { 3, 23 }) {
+					var knn = new KnnClassifier(k);
+					FeatureWeights = WrapperMethod(examples, knn, label);
+
+					Tuple<double, double> meanStd = TestNTimes(knn, examples, 5, 5, label);
+					Console.WriteLine(
+						"{0}, k{1} Error rate: mean {2:0.00}, std {3:0.00}, included features = {4}",
+						_labelNames[label],
+						k,
+						meanStd.Item1,
+						meanStd.Item2,
+						FeatureWeights.Count(x => x != 0)
+					);
+				}
 			}
 		}
 
@@ -158,10 +171,9 @@ namespace IntelOrca.GithubML.Processing
 
 		#region Feature selection
 
-		private static int[] WrapperMethod(IEnumerable<Example> examples, int label)
+		private static int[] WrapperMethod(IEnumerable<Example> examples, KnnClassifier knn, int label)
 		{
 			int numFeatures = _featureNames.Length;
-			KnnClassifier knn = new KnnClassifier(23);
 
 			Queue<int> randomFeatureList = new Queue<int>(
 				Enumerable.Range(0, numFeatures).OrderBy(x => _random.Next())
@@ -182,21 +194,22 @@ namespace IntelOrca.GithubML.Processing
 				double errorRate = CrossValidate(knn, examples, 5, label);
 				if (errorRate < bestErrorRate)
 					bestErrorRate = errorRate;
-				else if (errorRate > bestErrorRate + 4)
+				else if (errorRate > bestErrorRate + 0.02) {
 					featuresToInclude[featureIndex] = 1;
+				}
 
 				double remainingFeatureCount = randomFeatureList.Count;
 				double featuresDoneSoFar = numFeatures - remainingFeatureCount;
 				double avgTimePerTest = sw.ElapsedMilliseconds / featuresDoneSoFar;
 				double eta = avgTimePerTest * remainingFeatureCount;
 
-				Console.Clear();
-				Console.WriteLine("{0:0.0}%, ETA: {1:0.0} minutes", featuresDoneSoFar / numFeatures * 100, eta / (1000 * 60));
+				// Console.Clear();
+				// Console.WriteLine("{0:0.0}%, ETA: {1:0.0} minutes", featuresDoneSoFar / numFeatures * 100, eta / (1000 * 60));
 			}
 
-			for (int i = 0; i < numFeatures; i++)
-				Console.WriteLine(featuresToInclude[i]);
-			Console.ReadLine();
+			// for (int i = 0; i < numFeatures; i++)
+			// 	Console.WriteLine(featuresToInclude[i]);
+			// Console.ReadLine();
 
 			return featuresToInclude.ToArray();
 		}

@@ -27,7 +27,8 @@ label them.
 This projects explores how common labels in particular (\textit{bug}, \textit{suggestion} and \textit{question}) can be
 predicted for GitHub issues by first extracting features from the issue text in the form of words and phrases. This can then be
 processed using machine learning techniques such as the k-Nearest Neighbour classifier and finally measuring and comparing the
-performance over the wrapper and mutual information feature selection techniques to improve the accuracy of the classifier.
+performance over the trial and error and mutual information feature selection techniques to improve the accuracy of the
+classifier.
 \end{abstract}
 
 %--------------------------------------------------------------------------
@@ -81,9 +82,9 @@ include as features, however removing a set of known general stop words was cons
 
 \subsection{Feature selection}
 Once initial tests with all the features have been run, the number of features can be narrowed down to reduce the size of the
-problem and also reduce the error rate by removing irrelevant or other noisy features. The `wrapper', `mutual information' and
-`conditional mutual information' techniques were attempted as they are known to work well on discrete features, unlike
-`Pearson's correlation coefficient' which is more fitted for continuous data.
+problem and also reduce the error rate by removing irrelevant or other noisy features. The `trial and error',
+`mutual information' and `conditional mutual information' techniques were attempted as they are known to work well on discrete
+features, unlike `Pearson's correlation coefficient' which is more fitted for continuous data.
 
 %--------------------------------------------------------------------------
 % Experiments
@@ -133,7 +134,8 @@ validation on all but one of the folds the data is split into. The folds that gi
 data is then used as the training data for the fold that was not used in the cross validation. The error rate produced by this
 final test is then used as the measure of performance.
 
-% Initial results
+\subsubsection{Initial results}
+\label{sec:initial_results}
 Without any feature selection, an average error rate across all labels using cross validation was 26\%. The error rate for just
 the \textbf{bug} label was significantly higher at 36\%. This was across a range of different $k$ values between 1 and 53.
 Figure~\ref{fig:raw_errors} shows the error rates for each label over the value $k$. The uncertainty was quite low with
@@ -157,11 +159,15 @@ produce higher distances for features that correlate more. If the weight is 0, t
 \end{equation}
 where $w_{j}$ is the weight of the feature.
 
-\subsubsection{The `Wrapper' method}
-The wrapper method is a greedy algorithm where each feature is selected randomly until the accuracy reaches the desired value.
-This can be optimal if all combinations of features are searched, however that is an intractable problem. Instead a random space
-is searched. This can be good but does not give generalised results as the search is based on one or more particular
-classifiers.
+\subsubsection{Trial and error method}
+The first method investigated was a greedy algorithm where each feature is selected randomly and given a weight of 0. The
+classifier is then tested to see if the accuracy improved or not. If the accuracy improved, the feature is concluded as noise,
+if the accuracy did not change by any significant amount, the feature was concluded to be irrelevant. If the accuracy dropped,
+the feature was concluded as significant.
+
+This could be done repeatedly until all combinations of features are searched, however that is an intractable problem. Therefore
+just a single pass was performed in a random order so the results were more generalised, as the order could dictate the
+performance based on multiple sets of features. This means redundancy is not taken into account and could impact the results.
 
 Each feature was initially given a weight of 1. An initial classifier test was performed to calculate the error rate for when
 all the features are used. The algorithm then randomly selects a feature and sets its weight to 0 before running the test again.
@@ -169,11 +175,12 @@ If the test returns an error rate that is significantly higher than the best err
 Otherwise the best error rate is updated accordingly and the process continues with another random feature until all features
 have been searched. The remaining features with a weight of 1 are significant to keeping the error rate low, the features with a
 weight of 0 are concluded as noise. This does not take into account pairs of features or more, which is partially why the
-features are searched in a random order so that the final result is slightly more generalised. See algorithm~\ref{alg:wrapper}.
+features are searched in a random order so that the final result is slightly more generalised.
+See algorithm~\ref{alg:trialerror}.
 
 \begin{algorithm}
-    \caption{Wrapper method}
-    \label{alg:wrapper}
+    \caption{Trial and error method}
+    \label{alg:trialerror}
     \begin{algorithmic}
         \STATE $w[0..N] \gets 1$
         \STATE $best\_ error \gets \mathrm{test\_ classifier}(w)$
@@ -189,7 +196,34 @@ features are searched in a random order so that the final result is slightly mor
     \end{algorithmic}
 \end{algorithm}
 
-\todo{wrapper method results}
+A tolerance value of 0.02 was used which is the highest standard deviation value seen in the initial error rate results before
+feature selection shown in Section~\ref{sec:initial_results}. A $k$ value of 3 and 23 was used against all three labels. The
+results are shown in Figure~\ref{fig:trialerror_errors}. The results did not shown any improvement over the original results
+before feature selection before Figure~\ref{fig:raw_errors}, it did however significantly reduce the number of features
+improving the efficiency, this can be seen in Table~\ref{tbl:trialerror_inc_features}.
+
+\begin{table}[h]
+    \centering
+    \begin{tabular}{l|c|c}
+                   & \multicolumn{2}{l}{Included Features} \\
+        \hline
+        k          & 3                 & 23                \\
+        \hline
+        bug        & 68                & 32                \\
+        suggestion & 34                & 9                 \\
+        question   & 39                & 0                 \\
+        \hline
+    \end{tabular}
+    \caption{Number of included features for after trial and error feature selection.}
+    \label{tbl:trialerror_inc_features}
+\end{table}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{charts/wrapper_errors.pdf}
+    \caption{Error rate results after trial and error feature selection.}
+    \label{fig:trialerror_errors}
+\end{figure}
 
 \subsubsection{Mutual Information}
 \label{sec:mutual_informaton}
@@ -354,9 +388,9 @@ selection, Figure~\ref{fig:raw_errors} and Figure~\ref{fig:cmim_errors} respecti
 accuracy, there would have been improvement in efficiency as there are many features that are insignificant. The reduced noise
 could improve other classifiers, particularly if they use linear learning algorithms.
 
-\par
-\cite{redundant_feature_elimination}
-\cite{mltechniques_spamfiltering}
+% \par
+% \cite{redundant_feature_elimination}
+% \cite{mltechniques_spamfiltering}
 
 
 %--------------------------------------------------------------------------
