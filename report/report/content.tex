@@ -77,13 +77,13 @@ words and phrases that existed with in all three repositories. This was to elimi
 particular repository, e.g. \textit{JavaScript} for the ``TypeScript'' repository and therefore leaving a more generalised set
 of words and phrases that could be used for any repository. Stop words were also removed as they would act as noise during the training stage, due to their abundance in most literature. A list of stop words provided by ranks.nl \cite{ranks.nl} was used.
 tf-idf is an equation that can be used to measure how important a word or phrase is based on its global frequency over all
-documents and its frequency for a particular document. This could of have been used to further reduce the list of words to
+documents and its frequency for a particular document. This could have been used to further reduce the list of words to
 include as features, however removing a set of known general stop words was considered to be enough to reduce the set as feature selection based on classifier performance will also take place.
 
 \subsection{Feature selection}
 Once initial tests with all the features have been run, the number of features can be narrowed down to reduce the size of the
 problem and also reduce the error rate by removing irrelevant or other noisy features. The `trial and error',
-`mutual information' and `conditional mutual information' techniques were attempted as they are known to work well on discrete
+`mutual information' and `conditional mutual information' techniques were utilised as they are known to work well on discrete
 features, unlike `Pearson's correlation coefficient' which is more fitted for continuous data.
 
 %--------------------------------------------------------------------------
@@ -91,17 +91,16 @@ features, unlike `Pearson's correlation coefficient' which is more fitted for co
 %--------------------------------------------------------------------------
 \section{Experiments}
 \subsection{k-Nearest Neighbour classifier}
-The k-Nearest Neighbour (k-NN) classifier requires no learning algorithm to produce a model. Instead it classifies by an example
-by testing against every example within the training data. k-NN classifiers can provide accurate results but are however very
+The k-Nearest Neighbour (k-NN) classifier requires no learning algorithm to produce a model. Instead it classifies by testing against every example within the training data. k-NN classifiers can provide accurate results but are however very
 computationally expensive due the the $O(nd)$ running time where $n$ is the number of examples and $d$ is the number of
 features. It classifies an example by measuring the distance between the testing example and every training example using a
 distance function, for example `Euclidean' or `Hamming'. It then chooses the most common class in the nearest $k$ examples.
-There are many techniques that can be used to optimise the algorithm but are not relevant to this project's objective.
+There are many other techniques that could be used to optimise the algorithm but none were considered relevant to this project's objective.
 
-Due to the binary features of whether a word or phrase exists or not in the body text of an issue, a distance function such as
+Due to the binary nature of whether a word or phrase exists or not in the body text of an issue, a distance function such as
 Euclidean would not be appropriate. Instead the distance can be calculated using the Hamming formula as shown in
 Equation~\ref{eq:hamming}. This is the total number of features that are different between two examples. Therefore two identical
-examples will produce a distance of 0 and will increase, the more words and phrases that are only present in one example and not
+examples will produce a distance of zero and will increase as more words and phrases are present in one example and not
 the other.
 \begin{equation}
     \label{eq:hamming}
@@ -112,7 +111,7 @@ and 1 if the word or phrase is only present in one example but not the other.
 
 \subsection{Measuring the performance}
 Before attempting to improve the classifier using feature selection, a method of measuring the performance reliably is required
-so that any improvement or degrade is shown with the performance values before and after manipulation of the classifier. The
+so that any improvement or degradation is shown with the performance values before and after manipulation of the classifier. The
 performance is measured based on the number of correct predictions made compared with the number of incorrect predictions made,
 known as the error rate. Splitting up the examples (obtained from the application that was written to extract issues from
 GitHub) into two parts allows one part to be used for training and the other part to be used for testing. Since the correct
@@ -126,7 +125,7 @@ standard deviation values which show the variation or the amount of error.
 
 \subsubsection{Cross validation}
 Cross validation involves splitting the examples into multiple folds so that each fold can be used for testing and the rest for
-training. The final error rates can be averaged to generalise the classifier's performance more as it takes into account
+training. The final error rates can be averaged to generalise the classifier's performance as it takes into account
 multiple sets of training data and testing data in isolation.
 
 This can be further improved by a technique known as Leave One Out Cross Validation (LOOCV) which involves performing cross
@@ -137,7 +136,7 @@ final test is then used as the measure of performance.
 \subsubsection{Initial results}
 \label{sec:initial_results}
 Without any feature selection, an average error rate across all labels using cross validation was 26\%. The error rate for just
-the \textbf{bug} label was significantly higher at 36\%. This was across a range of different $k$ values between 1 and 53.
+the \textbf{bug} label was significantly higher at 36\%. This was found across a range of different $k$ values between 1 and 53.
 Figure~\ref{fig:raw_errors} shows the error rates for each label over the value $k$. The uncertainty was quite low with
 standard deviation values below 0.02, this can be seen from the error bars.
 
@@ -160,7 +159,7 @@ produce higher distances for features that correlate more. If the weight is 0, t
 where $w_{j}$ is the weight of the feature.
 
 \subsubsection{Trial and error method}
-The first method investigated was a greedy algorithm where each feature is selected randomly and given a weight of 0. The
+The first method investigated was a greedy algorithm where each feature is selected randomly and given a weight of zero. The
 classifier is then tested to see if the accuracy improved or not. If the accuracy improved, the feature is concluded as noise,
 if the accuracy did not change by any significant amount, the feature was concluded to be irrelevant. If the accuracy dropped,
 the feature was concluded as significant.
@@ -169,13 +168,13 @@ This could be done repeatedly until all combinations of features are searched, h
 just a single pass was performed in a random order so the results were more generalised, as the order could dictate the
 performance based on multiple sets of features. This means redundancy is not taken into account and could impact the results.
 
-Each feature was initially given a weight of 1. An initial classifier test was performed to calculate the error rate for when
-all the features are used. The algorithm then randomly selects a feature and sets its weight to 0 before running the test again.
-If the test returns an error rate that is significantly higher than the best error rate, the feature weight is reset back to 1.
+Each feature was initially given a weight of one. An initial classifier test was performed to calculate the error rate for when
+all the features are used. The algorithm then randomly selects a feature and sets its weight to zero before running the test again.
+If the test returns an error rate that is significantly higher than the best error rate, the feature weight is reset back to one.
 Otherwise the best error rate is updated accordingly and the process continues with another random feature until all features
-have been searched. The remaining features with a weight of 1 are significant to keeping the error rate low, the features with a
-weight of 0 are concluded as noise. This does not take into account pairs of features or more, which is partially why the
-features are searched in a random order so that the final result is slightly more generalised.
+have been searched. The remaining features with a weight of one are significant to keeping the error rate low, the features with a
+weight of zero are deemed to be noise. This does not take into account pairs of features or more, which is one reason why the
+features are searched in a random order, giving a more generalised final result.
 See algorithm~\ref{alg:trialerror}.
 
 \begin{algorithm}
@@ -214,7 +213,7 @@ improving the efficiency, this can be seen in Table~\ref{tbl:trialerror_inc_feat
         question   & 39                & 0                 \\
         \hline
     \end{tabular}
-    \caption{Number of included features for after trial and error feature selection.}
+    \caption{Number of included features after trial and error feature selection.}
     \label{tbl:trialerror_inc_features}
 \end{table}
 
@@ -229,14 +228,14 @@ improving the efficiency, this can be seen in Table~\ref{tbl:trialerror_inc_feat
 \label{sec:mutual_informaton}
 Entropy shows us the measurement of information for a set of data or in other words, the ``amount of randomness''. Entropy can
 be used to measure the amount of information gain for a particular feature. By using equation~\ref{eq:entropy}, where $X$ is
-the set of feature values or label values, the amount information in the probability distribution of the set can be calculated.
+the set of feature values or label values, the amount of information in the probability distribution of the set can be calculated.
 \begin{align}
     \label{eq:entropy}
     H(X) = -\sum_{x \in X} p(x) \log p(x)
 \end{align}
 
 Because this scenario only contains binary features (non-existent and existent words / phrases) and binary classes
-(e.g. bug or not bug), equation~\ref{eq:binary_entropy} can be used instead which derives from equation~\ref{eq:entropy} but
+(e.g. bug or not bug), equation~\ref{eq:binary_entropy} can be used instead which is derived from equation~\ref{eq:entropy} but
 with the probability and compliment substituted for the summation.
 \begin{equation}
     \label{eq:binary_entropy}
@@ -399,7 +398,7 @@ could improve other classifiers, particularly if they use linear learning algori
 \section{Conclusions}
 The aim of the project was to apply feature selection techniques to improve the accuracy of GitHub label classifiers. All the
 features used were binary values representing whether a particular word or phrase was present in the body text of an issue. This
-meant that the techniques used has to only cater for binary data. This also included the distance function used in the k-NN
+meant that the techniques used have only to cater for binary data. This also included the distance function used in the k-NN
 classifier. The focus was primarily on feature selection, so only one classifier was tested. It was assumed that a k-NN
 classifier would provide a generalised result as it is non-linear. However Section~\ref{sec:mutual_informaton} showed that just
 a different value of $k$ had a significant impact on the error rate where issues labelled \textit{bug} performed well with a
@@ -415,22 +414,22 @@ irrelevant. These were mostly stop words that had not already been filtered out 
 These might have been filtered out during the text mining stage if tf-idf had been used, as mentioned in
 Section~\ref{sec:background_wordfreq}.
 
-The remaining features correlated more with the labels, in either a positive or negative way as seen in
+The remaining features had a higher correlation with the labels, in either a positive or negative way as seen in
 Figure~\ref{fig:mi_prob}. For example the \textit{bug} label, the features \textit{reproduce} and \textit{crash} had high
-probability and high entropy meaning that if they are within the issue text, the issue is likely a bug. Where as the features
+probability and high entropy meaning that if they are within the issue text, the issue is likely a bug. Whereas the features
 \textit{nice}, \textit{thought} and \textit{cool} had a very low probability but a high entropy meaning that if they were in the
 issue text, it is likely NOT a bug. This was promising as the nature of the words clearly match the results. Mutual information
 in its simplest form therefore appears to provide a trustworthy measurement of correlation between a feature and a bug. It
 however does not help reduce redundant features.
 
 Unfortunately, neither of the feature selection techniques that were investigated were able to increase the accuracy by any
-significant amount. Conditional mutual information, Section~\ref{sec:cmim} showed a slight hint of a more generalised solution
+significant amount. Conditional mutual information in Section~\ref{sec:cmim} showed a slight hint of a more generalised solution
 for achieving the best error rates across all labels using the same training parameters but otherwise showed no improvement
 over the original error rates prior to any feature selection or ranking. Feature selection however does not guarantee any
 improvement \cite{stability_feature_ranking}, particularly if it does not construct or evaluate a classification model. It was
 also noted that in another paper comparing feature selection methods for spam filtering \cite{mlmethods_spamfiltering}, k-NN
 proved to have lower accuracy than other classifiers such as na\"{i}ve Bayes or support vector machines (SVM). It also had a
-very low precision, meaning that it was very sensitive to noise. This could be a possible explanation to the why the k-NN was
+very low precision, meaning that it was very sensitive to noise. This could be a possible explanation as to why the k-NN was
 unable to show any improvement even after a variety of feature selection and ranking techniques. Further work to this project
 should include the investigation of other classifiers to determine if they can be improved using the same feature selection
 and ranking techniques used for the k-NN classifier.
