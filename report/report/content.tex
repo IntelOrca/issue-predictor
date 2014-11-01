@@ -75,10 +75,12 @@ words, pairs of words and triples of words were counted for each issue that was 
 once in each individual repository were removed, the remaining words and phrases were then further filtered leaving just the
 words and phrases that existed with in all three repositories. This was to eliminate specific terminology only found for a
 particular repository, e.g. \textit{JavaScript} for the ``TypeScript'' repository and therefore leaving a more generalised set
-of words and phrases that could be used for any repository. Stop words were also removed as they would act as noise during the training stage, due to their abundance in most literature. A list of stop words provided by ranks.nl \cite{ranks.nl} was used.
+of words and phrases that could be used for any repository. Stop words were also removed as they would act as noise during the
+training stage, due to their abundance in most literature. A list of stop words provided by ranks.nl \cite{ranks.nl} was used.
 tf-idf is an equation that can be used to measure how important a word or phrase is based on its global frequency over all
-documents and its frequency for a particular document. This could have been used to further reduce the list of words to
-include as features, however removing a set of known general stop words was considered to be enough to reduce the set as feature selection based on classifier performance will also take place.
+documents and its frequency for a particular document. This could have been used to further reduce the list of words to include
+as features, however removing a set of known general stop words was considered to be enough to reduce the set as feature
+selection based on classifier performance will also take place.
 
 \subsection{Feature selection}
 Once initial tests with all the features have been run, the number of features can be narrowed down to reduce the size of the
@@ -91,17 +93,19 @@ features, unlike `Pearson's correlation coefficient' which is more fitted for co
 %--------------------------------------------------------------------------
 \section{Experiments}
 \subsection{k-Nearest Neighbour classifier}
-The k-Nearest Neighbour (k-NN) classifier requires no learning algorithm to produce a model. Instead it classifies by testing against every example within the training data. k-NN classifiers can provide accurate results but are however very
+The k-Nearest Neighbour (k-NN) classifier requires no learning algorithm to produce a model. Instead it classifies by testing
+against every example within the training data. k-NN classifiers can provide accurate results but are however very
 computationally expensive due the the $O(nd)$ running time where $n$ is the number of examples and $d$ is the number of
 features. It classifies an example by measuring the distance between the testing example and every training example using a
 distance function, for example `Euclidean' or `Hamming'. It then chooses the most common class in the nearest $k$ examples.
-There are many other techniques that could be used to optimise the algorithm but none were considered relevant to this project's objective.
+There are many other techniques that could be used to optimise the algorithm but none were considered relevant to this project's
+objective.
 
 Due to the binary nature of whether a word or phrase exists or not in the body text of an issue, a distance function such as
 Euclidean would not be appropriate. Instead the distance can be calculated using the Hamming formula as shown in
 Equation~\ref{eq:hamming}. This is the total number of features that are different between two examples. Therefore two identical
-examples will produce a distance of zero and will increase as more words and phrases are present in one example and not
-the other.
+examples will produce a distance of zero and will increase as more words and phrases are present in one example and not the
+other.
 \begin{equation}
     \label{eq:hamming}
     \mathrm{hamming}(x,x') = \sum^d_{j=1} \delta (x_{j} \neq x'_{j})
@@ -159,22 +163,23 @@ produce higher distances for features that correlate more. If the weight is 0, t
 where $w_{j}$ is the weight of the feature.
 
 \subsubsection{Trial and error method}
-The first method investigated was a greedy algorithm where each feature is selected randomly and given a weight of zero. The
-classifier is then tested to see if the accuracy improved or not. If the accuracy improved, the feature is concluded as noise,
-if the accuracy did not change by any significant amount, the feature was concluded to be irrelevant. If the accuracy dropped,
-the feature was concluded as significant.
+The first method investigated was a single pass trial and error method. This is a wrapper method as it is based on achieving the
+lowest error rate for a particular model. The method is a greedy algorithm where each feature is selected randomly and given a
+weight of zero. The classifier is then tested to see if the accuracy improved or not. If the accuracy improved, the feature is
+concluded as noise, if the accuracy did not change by any significant amount, the feature was concluded to be irrelevant. If the
+accuracy dropped, the feature was concluded as significant.
 
 This could be done repeatedly until all combinations of features are searched, however that is an intractable problem. Therefore
 just a single pass was performed in a random order so the results were more generalised, as the order could dictate the
 performance based on multiple sets of features. This means redundancy is not taken into account and could impact the results.
 
 Each feature was initially given a weight of one. An initial classifier test was performed to calculate the error rate for when
-all the features are used. The algorithm then randomly selects a feature and sets its weight to zero before running the test again.
-If the test returns an error rate that is significantly higher than the best error rate, the feature weight is reset back to one.
-Otherwise the best error rate is updated accordingly and the process continues with another random feature until all features
-have been searched. The remaining features with a weight of one are significant to keeping the error rate low, the features with a
-weight of zero are deemed to be noise. This does not take into account pairs of features or more, which is one reason why the
-features are searched in a random order, giving a more generalised final result.
+all the features are used. The algorithm then randomly selects a feature and sets its weight to zero before running the test
+again. If the test returns an error rate that is significantly higher than the best error rate, the feature weight is reset back
+to one. Otherwise the best error rate is updated accordingly and the process continues with another random feature until all
+features have been searched. The remaining features with a weight of one are significant to keeping the error rate low, the
+features with a weight of zero are deemed to be noise. This does not take into account pairs of features or more, which is one
+reason why the features are searched in a random order, giving a more generalised final result.
 See algorithm~\ref{alg:trialerror}.
 
 \begin{algorithm}
@@ -227,8 +232,8 @@ improving the efficiency, this can be seen in Table~\ref{tbl:trialerror_inc_feat
 \subsubsection{Mutual Information}
 \label{sec:mutual_informaton}
 Entropy shows us the measurement of information for a set of data or in other words, the ``amount of randomness''. Entropy can
-be used to measure the amount of information gain for a particular feature. By using equation~\ref{eq:entropy}, where $X$ is
-the set of feature values or label values, the amount of information in the probability distribution of the set can be calculated.
+be used to measure the amount of information gain for a particular feature. By using equation~\ref{eq:entropy}, where $X$ is the
+set of feature values or label values, the amount of information in the probability distribution of the set can be calculated.
 \begin{align}
     \label{eq:entropy}
     H(X) = -\sum_{x \in X} p(x) \log p(x)
@@ -249,7 +254,9 @@ To determine whether a feature correlates to a particular class such as \textit{
 using equation~\ref{eq:mutual_information}, where $H(Y)$ is the entropy of the class and $H(Y|X)$ is the entropy of the class
 given the feature. This will produce numbers within the range $0 \leq I(X;Y) \leq \min(H(X), H(Y))$. The higher the value, the
 more the feature correlates to the class, either when it exists or doesn't exist. Each feature can then have an independent
-weight based on the mutual information (MI) for a particular class or by its rank within the set of features.
+weight based on the mutual information (MI) for a particular class or by its rank within the set of features. This is a filter
+feature selection technique as it uses a proxy measure instead of the error rate to score a subset of
+features \cite{wikipedia:featureselection}.
 \begin{equation}
     \label{eq:mutual_information}
     I(X;Y) = H(Y) - H(Y|X)
@@ -287,10 +294,10 @@ Table~\ref{tbl:mi_errors_k3} and Figure~\ref{fig:mi_errors_k3}.
     \hline
 
     % First row
-    & \multicolumn{6}{c|}{error rate} \\
+    & \multicolumn{6}{c|}{error rate ($\sigma$)} \\
 
     % Second row
-    minimum &
+    min. &
     \multicolumn{2}{c|}{\textbf{bug}} &
     \multicolumn{2}{c|}{\textbf{suggestion}} &
     \multicolumn{2}{c|}{\textbf{question}}
@@ -299,17 +306,17 @@ Table~\ref{tbl:mi_errors_k3} and Figure~\ref{fig:mi_errors_k3}.
     \hline
 
     % Data
-    0.0 & 0.32 & 0.00 & 0.24 & 0.01 & 0.25 & 0.01 \\
-    0.1 & 0.36 & 0.02 & 0.31 & 0.13 & 0.23 & 0.06 \\
-    0.2 & 0.38 & 0.02 & 0.31 & 0.13 & 0.28 & 0.11 \\
-    0.3 & 0.40 & 0.01 & 0.32 & 0.14 & 0.19 & 0.00 \\
-    0.4 & 0.43 & 0.05 & 0.25 & 0.04 & 0.21 & 0.05 \\
-    0.5 & 0.44 & 0.06 & 0.43 & 0.24 & 0.19 & 0.00 \\
-    0.6 & 0.45 & 0.06 & 0.32 & 0.17 & 0.24 & 0.06 \\
-    0.7 & 0.48 & 0.07 & 0.41 & 0.22 & 0.24 & 0.06 \\
-    0.8 & 0.44 & 0.07 & 0.40 & 0.21 & 0.29 & 0.20 \\
-    0.9 & 0.44 & 0.06 & 0.23 & 0.00 & 0.28 & 0.19 \\
-    1.0 & 0.46 & 0.05 & 0.23 & 0.00 & 0.34 & 0.24 \\
+    0.0 & 0.32 & (0.00) & 0.24 & (0.01) & 0.25 & (0.01) \\
+    0.1 & 0.36 & (0.02) & 0.31 & (0.13) & 0.23 & (0.06) \\
+    0.2 & 0.38 & (0.02) & 0.31 & (0.13) & 0.28 & (0.11) \\
+    0.3 & 0.40 & (0.01) & 0.32 & (0.14) & 0.19 & (0.00) \\
+    0.4 & 0.43 & (0.05) & 0.25 & (0.04) & 0.21 & (0.05) \\
+    0.5 & 0.44 & (0.06) & 0.43 & (0.24) & 0.19 & (0.00) \\
+    0.6 & 0.45 & (0.06) & 0.32 & (0.17) & 0.24 & (0.06) \\
+    0.7 & 0.48 & (0.07) & 0.41 & (0.22) & 0.24 & (0.06) \\
+    0.8 & 0.44 & (0.07) & 0.40 & (0.21) & 0.29 & (0.20) \\
+    0.9 & 0.44 & (0.06) & 0.23 & (0.00) & 0.28 & (0.19) \\
+    1.0 & 0.46 & (0.05) & 0.23 & (0.00) & 0.34 & (0.24) \\
 
     \hline
     \end{tabular}
@@ -333,8 +340,8 @@ Figure~\ref{fig:mi_errors_k3} which could be due to the training data being far 
 
 \subsubsection{Conditional Mutual Information}
 \label{sec:cmim}
-Conditional mutual information extends the mutual information technique by taking into account pairs of features in order to
-reduce redundancy.
+Conditional mutual information (CMIM) extends the mutual information technique by taking into account pairs of features in order
+to reduce redundancy.
 
 Algorithm~\ref{alg:cmim}, adapted from \emph{``Fast Binary Feature Selection''} \cite{fast_binary_feature_selection}, shows a
 na\"{i}ve approach to computing the best features using conditional mutual information.
@@ -378,7 +385,29 @@ however be a coincidence, more experimentation would be required to prove this.
 % Analysis
 %--------------------------------------------------------------------------
 \section{Analysis}
-\todo{}
+Three feature selection techniques were investigated for this project. These were `trial and error', `mutual information' and
+`conditional mutual information'. The trial and error technique showed little improvement in accuracy but reduced the number of
+features being included significantly. It did not search on sets of features which therefore did not take feature redundancy
+into account. Interestingly, the number of included features was a lot lower for $k = 23$ than $k = 3$. This was a statistic
+only the trial and error method could have produced as mutual information and conditional mutual information did not test the
+classifier when computing their selection of features. They therefore would always have a consistent feature selection and
+ranking across all values of $k$. Perhaps this is a useful trait that the trial and error or other wrapper feature selection
+methods hold to improve the accuracy for a particular model which filter feature selection methods can not do.
+
+Figure~\ref{fig:inc_feature_comparison_bug} shows a comparison of the number of features that were included for each feature
+selection technique for the \textit{bug} label. Each technique removed almost half the features. This suggests that a lot of the
+features were noise or were irrelevant. For this label, each technique removed a similar number of features reducing the
+uncertainty, they could however be removing different sets of features. If further analysis is performed on all the techniques,
+the features that were removed in all three techniques are more likely to be irrelevant to the classifier. The figure does
+however show that conditional mutual information removes the least number of features, and that is the only technique that took
+redundancy into account. This is an unexpected result as more features should have been removed due to them being redundant.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\linewidth]{charts/included_feature_comparison.pdf}
+    \caption{Comparison of the number of included features for \textit{bug}.}
+    \label{fig:inc_feature_comparison_bug}
+\end{figure}
 
 When performing feature selection using `conditional mutual information', nearly half of the features were ignored due to them
 being irrelevant or redundant by comparing the information between two features. It however did not improve the accuracy. This
@@ -387,11 +416,6 @@ selection, Figure~\ref{fig:raw_errors} and Figure~\ref{fig:cmim_errors} respecti
 accuracy, there would have been improvement in efficiency as there are many features that are insignificant. The reduced noise
 could improve other classifiers, particularly if they use linear learning algorithms.
 
-% \par
-% \cite{redundant_feature_elimination}
-% \cite{mltechniques_spamfiltering}
-
-
 %--------------------------------------------------------------------------
 % Conclusions
 %--------------------------------------------------------------------------
@@ -399,15 +423,16 @@ could improve other classifiers, particularly if they use linear learning algori
 The aim of the project was to apply feature selection techniques to improve the accuracy of GitHub label classifiers. All the
 features used were binary values representing whether a particular word or phrase was present in the body text of an issue. This
 meant that the techniques used have only to cater for binary data. This also included the distance function used in the k-NN
-classifier. The focus was primarily on feature selection, so only one classifier was tested. It was assumed that a k-NN
-classifier would provide a generalised result as it is non-linear. However Section~\ref{sec:mutual_informaton} showed that just
-a different value of $k$ had a significant impact on the error rate where issues labelled \textit{bug} performed well with a
-lower value of $k$ than issues labelled \textit{suggestion} or \textit{question}.
+classifier. The focus was primarily on feature selection, so only one classifier was tested. However
+Section~\ref{sec:mutual_informaton} showed that just a different value of $k$ had a significant impact on the error rate where
+issues labelled \textit{bug} performed well with a lower value of $k$ than issues labelled \textit{suggestion} or
+\textit{question}.
 
 Data was only exported from three different repositories, a total of 1797 examples and 93 features. It is likely some of these
 were labelled incorrectly which could significantly affect the training data. The training data should include many more
-repositories to improve generalisation and reduce the ratio of correctly labels to incorrectly labelled examples. Other features
-could also be examined, such as the user that submitted the issue or whether the body of the issue contained an image.
+repositories to improve the accuracy associated with any particular label, assuming that mislabelling is reasonably random.
+Other features could also be examined, such as the user that submitted the issue or whether the body of the issue contained an
+image.
 
 The feature selection techniques, particularly the mutual information calculations showed that over half of the features were
 irrelevant. These were mostly stop words that had not already been filtered out and non-stop words found in most of the issues.
@@ -418,7 +443,7 @@ The remaining features had a higher correlation with the labels, in either a pos
 Figure~\ref{fig:mi_prob}. For example the \textit{bug} label, the features \textit{reproduce} and \textit{crash} had high
 probability and high entropy meaning that if they are within the issue text, the issue is likely a bug. Whereas the features
 \textit{nice}, \textit{thought} and \textit{cool} had a very low probability but a high entropy meaning that if they were in the
-issue text, it is likely NOT a bug. This was promising as the nature of the words clearly match the results. Mutual information
+issue text, it is likely not a bug. This was promising as the nature of the words clearly match the results. Mutual information
 in its simplest form therefore appears to provide a trustworthy measurement of correlation between a feature and a bug. It
 however does not help reduce redundant features.
 
@@ -430,18 +455,12 @@ improvement \cite{stability_feature_ranking}, particularly if it does not constr
 also noted that in another paper comparing feature selection methods for spam filtering \cite{mlmethods_spamfiltering}, k-NN
 proved to have lower accuracy than other classifiers such as na\"{i}ve Bayes or support vector machines (SVM). It also had a
 very low precision, meaning that it was very sensitive to noise. This could be a possible explanation as to why the k-NN was
-unable to show any improvement even after a variety of feature selection and ranking techniques. Further work to this project
-should include the investigation of other classifiers to determine if they can be improved using the same feature selection
-and ranking techniques used for the k-NN classifier.
+unable to show any improvement even after a variety of feature selection and ranking techniques. It may be possible for the k-NN
+classifier to be improved by integrating the `l/k-rule' \cite{mlmethods_spamfiltering}, this adds a new parameter $l$ which can 
+force a label to be classified as a particular example if $l$ or more neighbours are also of that label. Further work to this
+project should include improving the k-NN classifier and the investigation of other classifiers to determine if they can be
+individually improved using the same feature selection and ranking techniques used for the k-NN classifier.
 
-%--------------------------------------------------------------------------
-% TODO
-%--------------------------------------------------------------------------
-% - Get advice on labelling the table in mutual information section for
-%   standard deviation.
-%
-% - Are non-linear classifiers more generalised than linear classifiers?
-%
 %--------------------------------------------------------------------------
 % Notes / ideas
 %--------------------------------------------------------------------------
