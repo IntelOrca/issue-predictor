@@ -409,12 +409,9 @@ redundancy into account. This is an unexpected result as more features should ha
     \label{fig:inc_feature_comparison_bug}
 \end{figure}
 
-When performing feature selection using `conditional mutual information', nearly half of the features were ignored due to them
-being irrelevant or redundant by comparing the information between two features. It however did not improve the accuracy. This
-is clearly shown by the high similarity between the error rates prior to feature selection and the error rates after the CMIM
-selection, Figure~\ref{fig:raw_errors} and Figure~\ref{fig:cmim_errors} respectively. While there was no improvement in
-accuracy, there would have been improvement in efficiency as there are many features that are insignificant. The reduced noise
-could improve other classifiers, particularly if they use linear learning algorithms.
+Mutual information and conditional mutual information, although reduced the number of features significantly as well, neither
+of them improved the accuracy. This can be seen by the comparison of Figure~\ref{fig:raw_errors}, Figure~\ref{fig:mi_prob} and
+Figure~\ref{fig:cmim_errors}.
 
 %--------------------------------------------------------------------------
 % Conclusions
