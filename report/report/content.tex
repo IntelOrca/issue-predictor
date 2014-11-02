@@ -386,21 +386,25 @@ however be a coincidence, more experimentation would be required to prove this.
 %--------------------------------------------------------------------------
 \section{Analysis}
 Three feature selection techniques were investigated for this project. These were `trial and error', `mutual information' and
-`conditional mutual information'. The trial and error technique showed little improvement in accuracy but reduced the number of
-features being included significantly. It did not search on sets of features which therefore did not take feature redundancy
-into account. Interestingly, the number of included features was a lot lower for $k = 23$ than $k = 3$. This was a statistic
-only the trial and error method could have produced as mutual information and conditional mutual information did not test the
-classifier when computing their selection of features. They therefore would always have a consistent feature selection and
-ranking across all values of $k$. Perhaps this is a useful trait that the trial and error or other wrapper feature selection
-methods hold to improve the accuracy for a particular model which filter feature selection methods can not do.
+`conditional mutual information'. The trial and error technique achieved little improvement in accuracy but significantly
+reduced the number of features included. As it did not take sets of features into account, feature redundancy could not be
+determined. Interestingly, the number of included features was significantly lower for $k = 23$ than $k = 3$ as mutual
+information and conditional mutual information did not test the classifier when computing their selection of features. The
+filter methods would therefore always have a consistent feature selection and ranking across all values of $k$. Perhaps this is
+a useful trait that the trial and error or other wrapper feature selection methods exhibit that improves the accuracy for a
+particular model, not achieved using filter methods.
 
 Figure~\ref{fig:inc_feature_comparison_bug} shows a comparison of the number of features that were included for each feature
-selection technique for the \textit{bug} label. Each technique removed almost half the features. This suggests that a lot of the
+selection technique for the \textit{bug} label. Each technique removed almost half the features and suggests that many of the
 features were noise or were irrelevant. For this label, each technique removed a similar number of features reducing the
-uncertainty, they could however be removing different sets of features. If further analysis is performed on all the techniques,
+uncertainty, however each could be removing different sets of features. If further analysis is performed on all the techniques,
 the features that were removed in all three techniques are more likely to be irrelevant to the classifier. The figure does
 however show that conditional mutual information removes the least number of features, and that is the only technique that took
 redundancy into account. This is an unexpected result as more features should have been removed due to them being redundant.
+
+Mutual information and conditional mutual information reduced the number of features significantly as well, although neither
+of them improved the accuracy. This can be seen by the comparison of Figure~\ref{fig:raw_errors}, Figure~\ref{fig:mi_prob} and
+Figure~\ref{fig:cmim_errors}.
 
 \begin{figure}[h]
     \centering
@@ -408,10 +412,6 @@ redundancy into account. This is an unexpected result as more features should ha
     \caption{Comparison of the number of included features for \textit{bug}.}
     \label{fig:inc_feature_comparison_bug}
 \end{figure}
-
-Mutual information and conditional mutual information, although reduced the number of features significantly as well, neither
-of them improved the accuracy. This can be seen by the comparison of Figure~\ref{fig:raw_errors}, Figure~\ref{fig:mi_prob} and
-Figure~\ref{fig:cmim_errors}.
 
 %--------------------------------------------------------------------------
 % Conclusions
